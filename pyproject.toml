@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "astrbot-plugin-scriptor"
-version = "1.0.5"
+version = "1.0.6"
 description = "灵笔司书 - AstrBot 长期记忆插件 | 基于 Scriptor 体系的多角色跨群体 AI 智能管家记忆系统"
 readme = "README.md"
 license = { text = "AGPL-3.0" }

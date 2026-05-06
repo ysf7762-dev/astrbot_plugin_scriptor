@@ -91,7 +91,7 @@ from .web.shared_state import set_shared_state
     "astrbot_plugin_scriptor",
     "Scriptor",
     "基于 Scriptor 的多角色跨群体 AI 智能管家记忆系统",
-    "1.0.5",
+    "1.0.6",
     "https://github.com/astrbots/astrbot_plugin_scriptor",
 )
 class ScriptorPlugin(
@@ -124,26 +124,36 @@ class ScriptorPlugin(
         import json
         import os
         
-        # 检查是否存在正确的配置文件（data/config/astrbot_plugin_scriptor_config.json）
+        # 检查是否存在配置文件（按优先级查找）
+        # 首选: data/config/astrbot_plugin_scriptor_config.json（AstrBot 规范）
+        # 备选: data/config/Scriptor_config.json（旧版本兼容）
         # self.data_dir = data/plugin_data/astrbot_plugin_scriptor
         # self.data_dir.parent.parent = data
-        correct_config_path = self.data_dir.parent.parent / "config" / "astrbot_plugin_scriptor_config.json"
-        logger.info(f"[Scriptor] 尝试加载配置文件：{correct_config_path}")
-        if correct_config_path.exists():
-            try:
-                # 使用 utf-8-sig 编码读取，自动处理 BOM
-                with open(correct_config_path, "r", encoding="utf-8-sig") as f:
-                    correct_config = json.load(f)
-                logger.info(f"[Scriptor] 从正确的配置文件加载成功")
-                logger.info(f"[Scriptor] web_search_enabled: {correct_config.get('web_search_enabled', 'N/A')}")
-                logger.info(f"[Scriptor] searxng_base_url: {correct_config.get('searxng_base_url', 'N/A')}")
-                # 直接使用字典，不转换为 AstrBotConfig
-                # 因为 ScriptorConfigPydantic 接受字典作为参数
-            except Exception as e:
-                logger.warning(f"[Scriptor] 从正确配置文件加载失败：{e}，使用默认配置")
-                correct_config = None
-        else:
-            logger.warning(f"[Scriptor] 配置文件不存在：{correct_config_path}")
+        config_candidates = [
+            self.data_dir.parent.parent / "config" / "astrbot_plugin_scriptor_config.json",
+            self.data_dir.parent.parent / "config" / "Scriptor_config.json",
+        ]
+        
+        correct_config_path = None
+        for candidate in config_candidates:
+            logger.info(f"[Scriptor] 尝试加载配置文件：{candidate}")
+            if candidate.exists():
+                correct_config_path = candidate
+                try:
+                    # 使用 utf-8-sig 编码读取，自动处理 BOM
+                    with open(correct_config_path, "r", encoding="utf-8-sig") as f:
+                        correct_config = json.load(f)
+                    logger.info(f"[Scriptor] 从配置文件加载成功：{correct_config_path}")
+                    logger.info(f"[Scriptor] web_search_enabled: {correct_config.get('web_search_enabled', 'N/A')}")
+                    logger.info(f"[Scriptor] admin_uids: {correct_config.get('admin_uids', 'N/A')}")
+                    break
+                except Exception as e:
+                    logger.warning(f"[Scriptor] 从配置文件加载失败：{e}")
+                    correct_config = None
+                    correct_config_path = None
+        
+        if correct_config is None and correct_config_path is None:
+            logger.warning(f"[Scriptor] 所有候选配置文件都不存在，使用默认配置")
             correct_config = None
         
         # 使用正确的配置或默认配置

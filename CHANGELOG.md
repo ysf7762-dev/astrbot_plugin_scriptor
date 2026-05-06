@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.6] - 2026-05-06
+
+### Fixed
+- 修复配置文件加载兼容性：优先读取 `astrbot_plugin_scriptor_config.json`，回退兼容旧版 `Scriptor_config.json`
+- 修复私聊判断逻辑：使用 `event.is_private_chat()` 官方方法，兼容 NapCat 等适配器返回异常 group_id 的情况
+- 修复 admin_uids 设置后无法识别的问题（根因为配置文件加载失败，非 admin_uids 本身解析问题）
+- 修复 whoami 命令在私聊环境下显示错误的问题（依赖私聊判断修复）
+
+## [1.0.5] - 2026-05-04
+
+### Fixed
+- 修复插件数据目录路径不一致问题：统一使用 `data/plugin_data/astrbot_plugin_scriptor/`
+- 修复 `main.py` 中 `StarTools.get_data_dir(self.name)` 路径与 WebUI 硬编码路径不一致导致数据不互通的问题
+
 ## [1.0.4] - 2026-05-03
 
 ### Fixed

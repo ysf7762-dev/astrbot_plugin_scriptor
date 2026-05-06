@@ -105,19 +105,24 @@ class HelpersMixin(BaseMixin):
 
         uid = self.identity_manager.get_or_create_uid(sender_id, platform, sender_name, umo)
 
-        group_id = "private"
-        raw_group = getattr(event.message_obj, "group_id", None)
-        if raw_group:
-            group_id = f"{platform}_group_{raw_group}"
+        is_private = event.is_private_chat() if hasattr(event, "is_private_chat") else False
+        if is_private:
+            group_id = "private"
+        else:
+            raw_group = getattr(event.message_obj, "group_id", None)
+            if raw_group is not None and raw_group != "" and raw_group != 0 and str(raw_group).strip():
+                group_id = f"{platform}_group_{raw_group}"
 
-            group_name = str(raw_group)
-            group_obj = getattr(event.message_obj, "group", None)
-            if group_obj and hasattr(group_obj, "group_name") and group_obj.group_name:
-                group_name = group_obj.group_name
+                group_name = str(raw_group)
+                group_obj = getattr(event.message_obj, "group", None)
+                if group_obj and hasattr(group_obj, "group_name") and group_obj.group_name:
+                    group_name = group_obj.group_name
 
-            self.group_manager.get_or_create_group(group_id, group_name, platform, uid)
+                self.group_manager.get_or_create_group(group_id, group_name, platform, uid)
 
-            self.group_manager.add_member(group_id, uid, sender_name, "member")
+                self.group_manager.add_member(group_id, uid, sender_name, "member")
+            else:
+                group_id = "private"
 
         return uid, group_id, f"{platform}:{sender_id}"
 
