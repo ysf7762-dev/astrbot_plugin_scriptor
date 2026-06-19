@@ -4,6 +4,7 @@ pytest 配置文件
 用于设置测试环境，解决模块导入问题
 """
 
+import asyncio
 import os
 import sys
 import types
@@ -12,6 +13,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# ── Python 3.9 兼容：确保有事件循环 ─
+# Python 3.10+ 的 get_event_loop() 会自动创建循环，3.9 不会
+if sys.version_info < (3, 10):
+    try:
+        asyncio.get_event_loop()
+    except RuntimeError:
+        asyncio.set_event_loop(asyncio.new_event_loop())
 # ── Mock astrbot 模块（必须在任何其他导入之前） ─
 # CI 环境中没有安装 astrbot，需要创建 mock 模块
 _astrbot = types.ModuleType("astrbot")
@@ -135,3 +143,11 @@ def pytest_collection_modifyitems(items):
 def setup_syspath():
     """确保 sys.path 在所有测试前正确设置"""
     return sys.path[:]
+
+
+@pytest.fixture(scope="session")
+def event_loop():
+    """Python 3.9 兼容：创建 session 级事件循环"""
+    loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
