@@ -195,15 +195,33 @@ class TestInteractionRecording:
 
     @pytest.mark.asyncio
     async def test_record_interaction_group(self, memory_manager):
-        """测试记录群聊交互"""
+        """测试记录群聊交互
+
+        修复 Issue #10: memory_manager.record_interaction() 不再为群聊创建日记文件，
+        群聊日记由 group_manager 统一负责。此处只验证：
+        1. 不创建群聊 memory 目录
+        2. 未处理消息计数正常增加
+        3. 时间戳正常更新
+        """
+        session_key = "user_123_group_456"
+        initial_count = len(memory_manager._unprocessed_messages.get(session_key, []))
+
         is_new = await memory_manager.record_interaction(
             uid="user_123", group_id="group_456", role="user", content="群聊测试消息"
         )
         assert isinstance(is_new, bool)
 
+        # 群聊场景下，memory_manager 不再创建 memory 目录
         group_dir = memory_manager._get_group_dir("group_456")
         note_dir = group_dir / "memory"
-        assert note_dir.exists()
+        assert not note_dir.exists(), "memory_manager 不应为群聊创建 memory 目录"
+
+        # 但未处理消息计数应正常增加
+        new_count = len(memory_manager._unprocessed_messages.get(session_key, []))
+        assert new_count == initial_count + 1
+
+        # 时间戳应已更新
+        assert session_key in memory_manager._last_active_time
 
     @pytest.mark.asyncio
     async def test_record_interaction_increments_unprocessed(self, memory_manager):
