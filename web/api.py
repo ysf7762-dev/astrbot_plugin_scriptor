@@ -65,24 +65,25 @@ def _import_knowledge_base():
     """动态导入 KnowledgeBase，支持同进程和子进程模式"""
     import sys
     from pathlib import Path
-    
+
     # 计算插件目录路径
     web_dir = Path(__file__).parent
     plugin_dir = web_dir.parent
-    
+
     # 添加到 sys.path（如果尚未添加）
     if str(plugin_dir) not in sys.path:
         sys.path.insert(0, str(plugin_dir))
-    
+
     # 直接导入 knowledge_base.py 文件，避免 core/__init__.py 的依赖
     import importlib.util
+
     kb_file = plugin_dir / "core" / "knowledge_base.py"
-    
+
     spec = importlib.util.spec_from_file_location("knowledge_base", kb_file)
     kb_module = importlib.util.module_from_spec(spec)
     sys.modules["knowledge_base"] = kb_module
     spec.loader.exec_module(kb_module)
-    
+
     return kb_module.KnowledgeBase
 
 
@@ -101,13 +102,13 @@ def get_knowledge_base_safe():
         KnowledgeBase = _import_knowledge_base()
         data_dir = get_data_dir_safe()
         logger.info(f"[Scriptor Web UI] 正在创建知识库实例，数据目录: {data_dir}")
-        
+
         kb_file = data_dir / "global" / "knowledge" / "KNOWLEDGE_BASE.md"
         if kb_file.exists():
             logger.info(f"[Scriptor Web UI] 知识库文件存在: {kb_file} (大小: {kb_file.stat().st_size} 字节)")
         else:
             logger.warning(f"[Scriptor Web UI] 知识库文件不存在: {kb_file}")
-        
+
         _knowledge_base_instance = KnowledgeBase(data_dir)
         item_count = len(_knowledge_base_instance.get_all_items())
         logger.info(f"[Scriptor Web UI] 已创建知识库实例（兼容模式），加载了 {item_count} 条知识")
@@ -115,6 +116,7 @@ def get_knowledge_base_safe():
     except Exception as e:
         logger.error(f"[Scriptor Web UI] 创建知识库实例失败: {e}")
         import traceback
+
         logger.error(traceback.format_exc())
         return None
 
@@ -1212,26 +1214,26 @@ async def list_knowledge():
 async def create_knowledge(item_data: KnowledgeItemCreate, request: Request):
     """创建知识库条目"""
     logger.info(f"[Scriptor Web UI] 收到添加知识请求: title={item_data.title}, type={item_data.knowledge_type}")
-    
+
     kb = get_knowledge_base_safe()
     if kb is None:
         logger.error("[Scriptor Web UI] 知识库未初始化，无法添加条目")
         raise HTTPException(status_code=503, detail="Knowledge base not initialized. Check server logs for details.")
 
     # 动态导入 KnowledgeItem 和 KnowledgeType（使用相同的导入方式）
+    import importlib.util
     import sys
     from pathlib import Path
-    import importlib.util
-    
+
     web_dir = Path(__file__).parent
     plugin_dir = web_dir.parent
     kb_file = plugin_dir / "core" / "knowledge_base.py"
-    
+
     spec = importlib.util.spec_from_file_location("knowledge_base", kb_file)
     kb_module = importlib.util.module_from_spec(spec)
     sys.modules["knowledge_base"] = kb_module
     spec.loader.exec_module(kb_module)
-    
+
     KnowledgeItem = kb_module.KnowledgeItem
     KnowledgeType = kb_module.KnowledgeType
 
@@ -1300,6 +1302,7 @@ async def get_knowledge_item(item_id: str):
 
 class KnowledgeItemUpdate(BaseModel):
     """知识库条目更新请求"""
+
     title: str
     content: str
     knowledge_type: str = "fact"
@@ -1322,9 +1325,9 @@ async def update_knowledge(item_id: str, item_data: KnowledgeItemUpdate, request
         raise HTTPException(status_code=503, detail="Knowledge base not initialized")
 
     # 动态导入 KnowledgeType
+    import importlib.util
     import sys
     from pathlib import Path
-    import importlib.util
 
     web_dir = Path(__file__).parent
     plugin_dir = web_dir.parent
@@ -1540,26 +1543,26 @@ async def update_config_endpoint(request: Request, data: ConfigUpdate):
     """更新配置（双向同步到 AstrBot 配置文件，保存后重启生效）"""
     try:
         data_dir = get_data_dir_safe()
-        
+
         # 保存到 Scriptor 配置文件
         scriptor_config_file = data_dir / "config.json"
         scriptor_config_file.parent.mkdir(parents=True, exist_ok=True)
         with open(scriptor_config_file, "w", encoding="utf-8") as f:
             json.dump(data.config, f, ensure_ascii=False, indent=2)
-        
+
         # 同时同步到 AstrBot 配置文件
         astrbot_config_dir = data_dir.parent.parent / "config" / "astrbot_plugin_scriptor_config.json"
         astrbot_config_file = astrbot_config_dir / "astrbot_plugin_scriptor_config.json"
         astrbot_config_file.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # 将嵌套配置转换为扁平配置
         flat_config = _convert_nested_to_flat(data.config)
-        
+
         with open(astrbot_config_file, "w", encoding="utf-8") as f:
             json.dump(flat_config, f, ensure_ascii=False, indent=2)
-        
+
         logger.info(f"[Scriptor WebUI] 配置已同步到 AstrBot 配置文件: {astrbot_config_file}")
-        
+
         return {"status": "success", "message": "配置已保存，重启 AstrBot 后生效"}
     except Exception as e:
         logger.error(f"[Scriptor WebUI] 保存配置失败: {e}")
@@ -1569,16 +1572,16 @@ async def update_config_endpoint(request: Request, data: ConfigUpdate):
 def _convert_nested_to_flat(nested_config: dict, parent_key: str = "") -> dict:
     """将嵌套配置转换为扁平配置（用于 AstrBot 配置文件）"""
     flat_config = {}
-    
+
     for key, value in nested_config.items():
         full_key = f"{parent_key}{key}" if parent_key else key
-        
+
         if isinstance(value, dict):
             # 递归处理嵌套字典
             flat_config.update(_convert_nested_to_flat(value, full_key + "_"))
         else:
             flat_config[full_key] = value
-    
+
     return flat_config
 
 
@@ -1911,28 +1914,28 @@ async def upload_archive(
             buffer.write(content)
 
         # 动态导入 DataIngestor（支持子进程模式）
-        import sys
         import importlib.util
+        import sys
 
         web_dir = Path(__file__).parent
         plugin_dir = web_dir.parent
-        
+
         # 先导入 ArchiveManager（被依赖模块）
         manager_file = plugin_dir / "core" / "archives" / "manager.py"
         manager_spec = importlib.util.spec_from_file_location("manager", manager_file)
         manager_module = importlib.util.module_from_spec(manager_spec)
         sys.modules["manager"] = manager_module
         manager_spec.loader.exec_module(manager_module)
-        
+
         # 再导入 ingestor（依赖 manager）
         ingestor_file = plugin_dir / "core" / "archives" / "ingestor.py"
         spec = importlib.util.spec_from_file_location("ingestor", ingestor_file)
         ingestor_module = importlib.util.module_from_spec(spec)
         sys.modules["ingestor"] = ingestor_module
-        
+
         # 手动注入依赖（避免相对导入）
         ingestor_module.ArchiveManager = manager_module.ArchiveManager
-        
+
         spec.loader.exec_module(ingestor_module)
 
         DataIngestor = ingestor_module.DataIngestor
@@ -1969,9 +1972,9 @@ async def delete_archive(table_name: str, request: Request):
     # 从 query params 获取 scope 和 target_id
     scope = request.query_params.get("scope", "global")
     target_id = request.query_params.get("target_id")
-    
+
     data_dir = get_data_dir_safe()
-    
+
     # 根据 scope 和 target_id 构建正确的数据库路径
     if scope == "global":
         db_path = data_dir / "global" / "archives.db"
@@ -2007,23 +2010,23 @@ async def delete_archive(table_name: str, request: Request):
             raise HTTPException(status_code=404, detail="个人档案库不存在")
     else:
         raise HTTPException(status_code=400, detail=f"未知的 scope: {scope}")
-    
+
     # 动态导入 ArchiveManager
-    import sys
     import importlib.util
-    
+    import sys
+
     web_dir = Path(__file__).parent
     plugin_dir = web_dir.parent
     manager_file = plugin_dir / "core" / "archives" / "manager.py"
-    
+
     spec = importlib.util.spec_from_file_location("manager", manager_file)
     manager_module = importlib.util.module_from_spec(spec)
     sys.modules["manager"] = manager_module
     spec.loader.exec_module(manager_module)
-    
+
     ArchiveManager = manager_module.ArchiveManager
     am = ArchiveManager(db_path=str(db_path))
-    
+
     try:
         am.unregister_table(table_name)
         logger.info(f"[Scriptor Web UI] 已删除档案：{table_name} (scope={scope}, target_id={target_id})")
@@ -2194,7 +2197,9 @@ async def move_archive(table_name: str, request: Request, data: ArchiveMoveReque
                 if group_dir.is_dir() and "group_" in group_dir.name:
                     parts = group_dir.name.split("group_", 1)
                     # 匹配：parts[1] == target_id（数字）或目录名包含 target_id（完整名称）
-                    if len(parts) == 2 and (parts[1] == target_id_str or target_id_str in group_dir.name or target_id_str == parts[1]):
+                    if len(parts) == 2 and (
+                        parts[1] == target_id_str or target_id_str in group_dir.name or target_id_str == parts[1]
+                    ):
                         target_db_path = group_dir / "archives.db"
                         break
                     # 也检查目录名是否完全匹配 target_id
@@ -2220,7 +2225,9 @@ async def move_archive(table_name: str, request: Request, data: ArchiveMoveReque
                 if profile_dir.is_dir() and "user_" in profile_dir.name:
                     parts = profile_dir.name.split("user_", 1)
                     # 匹配：parts[1] == target_id（数字）或目录名包含 target_id（完整名称）
-                    if len(parts) == 2 and (parts[1] == target_id_str or target_id_str in profile_dir.name or target_id_str == parts[1]):
+                    if len(parts) == 2 and (
+                        parts[1] == target_id_str or target_id_str in profile_dir.name or target_id_str == parts[1]
+                    ):
                         target_db_path = profile_dir / "archives.db"
                         break
                     # 也检查目录名是否完全匹配 target_id
@@ -2374,7 +2381,9 @@ async def copy_archive(table_name: str, request: Request, data: ArchiveMoveReque
                 if group_dir.is_dir() and "group_" in group_dir.name:
                     parts = group_dir.name.split("group_", 1)
                     # 匹配：parts[1] == target_id（数字）或目录名包含 target_id（完整名称）
-                    if len(parts) == 2 and (parts[1] == target_id_str or target_id_str in group_dir.name or target_id_str == parts[1]):
+                    if len(parts) == 2 and (
+                        parts[1] == target_id_str or target_id_str in group_dir.name or target_id_str == parts[1]
+                    ):
                         target_db_path = group_dir / "archives.db"
                         break
                     # 也检查目录名是否完全匹配 target_id
@@ -2399,7 +2408,9 @@ async def copy_archive(table_name: str, request: Request, data: ArchiveMoveReque
                 if profile_dir.is_dir() and "user_" in profile_dir.name:
                     parts = profile_dir.name.split("user_", 1)
                     # 匹配：parts[1] == target_id（数字）或目录名包含 target_id（完整名称）
-                    if len(parts) == 2 and (parts[1] == target_id_str or target_id_str in profile_dir.name or target_id_str == parts[1]):
+                    if len(parts) == 2 and (
+                        parts[1] == target_id_str or target_id_str in profile_dir.name or target_id_str == parts[1]
+                    ):
                         target_db_path = profile_dir / "archives.db"
                         break
                     # 也检查目录名是否完全匹配 target_id
@@ -3191,9 +3202,7 @@ async def run_optimization_tasks(request: Request):
             else:
                 results.append({"task": "cleanup_session_locks", "status": "skipped", "detail": "无会话锁目录"})
         except Exception as e:
-            results.append(
-                {"task": "cleanup_session_locks", "status": "warning", "detail": f"清理会话锁失败: {e!s}"}
-            )
+            results.append({"task": "cleanup_session_locks", "status": "warning", "detail": f"清理会话锁失败: {e!s}"})
 
         success_count = sum(1 for r in results if r["status"] == "success")
 

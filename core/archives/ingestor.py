@@ -31,19 +31,19 @@ try:
     from .manager import ArchiveManager
 except ImportError:
     # 子进程模式：使用绝对导入
+    import importlib.util
     import sys
     from pathlib import Path
-    import importlib.util
-    
+
     plugin_dir = Path(__file__).parent.parent
     manager_file = plugin_dir / "archives" / "manager.py"
-    
+
     if "manager" not in sys.modules:
         manager_spec = importlib.util.spec_from_file_location("manager", manager_file)
         manager_module = importlib.util.module_from_spec(manager_spec)
         sys.modules["manager"] = manager_module
         manager_spec.loader.exec_module(manager_module)
-    
+
     ArchiveManager = sys.modules["manager"].ArchiveManager
 
 
@@ -133,19 +133,17 @@ class DataIngestor:
                 if len(sample) == 0:
                     continue
 
-                numeric_pattern = r'^[¥￥$€£\s]*[\d,]+\.?\d*\s*$'
-                numeric_count = sum(
-                    1 for v in sample
-                    if isinstance(v, str) and re.match(numeric_pattern, v.strip())
-                )
+                numeric_pattern = r"^[¥￥$€£\s]*[\d,]+\.?\d*\s*$"
+                numeric_count = sum(1 for v in sample if isinstance(v, str) and re.match(numeric_pattern, v.strip()))
 
                 if numeric_count > len(sample) * 0.5:
+
                     def clean_number(val):
                         if val is None or not isinstance(val, str):
                             return val
-                        cleaned = re.sub(r'[¥￥$€£,\s]', '', val.strip())
+                        cleaned = re.sub(r"[¥￥$€£,\s]", "", val.strip())
                         try:
-                            if '.' in cleaned:
+                            if "." in cleaned:
                                 return float(cleaned)
                             else:
                                 return int(cleaned)

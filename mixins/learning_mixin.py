@@ -19,7 +19,7 @@ class LearningMixin(BaseMixin):
     - 学习模式命令
     - 授课模式命令
     - 学习状态查询
-    
+
     注意：所有命令装饰器已移至 main.py 中注册，避免指令冲突
     """
 

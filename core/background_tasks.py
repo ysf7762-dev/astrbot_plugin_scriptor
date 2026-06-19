@@ -72,8 +72,8 @@ class BackgroundTasks:
                 else:
                     session_str = f"webchat!{task.uid}!{task.uid}"
 
-            from astrbot.api.message_components import Plain
             from astrbot.api.all import MessageChain
+            from astrbot.api.message_components import Plain
 
             message_chain = MessageChain([Plain(msg_content)])
 
@@ -135,7 +135,7 @@ class BackgroundTasks:
             max_total_time = getattr(self.plugin.config, "graph_consolidation_max_time", 25) * 60
 
             total_processed = 0
-            
+
             # 收集所有需要处理的用户目录
             user_dirs = []
             for uid_dir in profiles_dir.iterdir():
@@ -163,10 +163,10 @@ class BackgroundTasks:
 
             # 创建所有用户的处理任务
             tasks = [process_with_semaphore(uid_dir) for uid_dir in user_dirs]
-            
+
             # 并发执行所有任务
             results = await asyncio.gather(*tasks, return_exceptions=True)
-            
+
             # 统计结果
             for i, result in enumerate(results):
                 if isinstance(result, Exception):
@@ -223,8 +223,7 @@ class BackgroundTasks:
                 # 使用 AstrBot v4.x 推荐的 llm_generate 接口
                 response = await asyncio.wait_for(
                     self.plugin.context.llm_generate(
-                        chat_provider_id=await self.plugin.context.get_current_chat_provider_id(None),
-                        prompt=prompt
+                        chat_provider_id=await self.plugin.context.get_current_chat_provider_id(None), prompt=prompt
                     ),
                     timeout=llm_timeout,
                 )
@@ -349,8 +348,8 @@ class BackgroundTasks:
 
         greeting_text = "\n".join(lines)
 
-        from astrbot.api.message_components import Plain
         from astrbot.api.all import MessageChain
+        from astrbot.api.message_components import Plain
 
         message_chain = MessageChain([Plain(greeting_text)])
 
@@ -381,7 +380,7 @@ class BackgroundTasks:
 
     async def run_evening_summary(self):
         """执行晚安总结 - 按会话维度分离：个人总结 + 群聊总结
-        
+
         设计原则：
         - 个人晚安总结：只看 profiles/<uid>/memory/YYYY-MM-DD.md，发送给个人
         - 群聊晚安总结：只看 groups/<gid>/memory/YYYY-MM-DD.md，发送到群聊
@@ -389,11 +388,11 @@ class BackgroundTasks:
         """
         logger.info("[Scriptor] 开始执行晚安总结...")
         today = datetime.now().strftime("%Y-%m-%d")
-        
+
         await self._run_personal_evening_summary(today)
-        
+
         await self._run_group_evening_summary(today)
-        
+
         logger.info("[Scriptor] 晚安总结全部完成")
 
     async def _run_personal_evening_summary(self, today: str):
@@ -505,8 +504,8 @@ class BackgroundTasks:
 
         summary_text = await self.generate_daily_summary_with_llm(uid, name, conversation_preview)
 
-        from astrbot.api.message_components import Plain
         from astrbot.api.all import MessageChain
+        from astrbot.api.message_components import Plain
 
         message_chain = MessageChain([Plain(summary_text)])
 
@@ -527,8 +526,8 @@ class BackgroundTasks:
 
         summary_text = await self.generate_group_summary_with_llm(group_name, conversation_preview)
 
-        from astrbot.api.message_components import Plain
         from astrbot.api.all import MessageChain
+        from astrbot.api.message_components import Plain
 
         message_chain = MessageChain([Plain(summary_text)])
 
@@ -564,10 +563,9 @@ class BackgroundTasks:
 请直接输出总结内容，不要有任何前缀或格式标记："""
 
             response = await self.plugin.context.llm_generate(
-                chat_provider_id=await self.plugin.context.get_current_chat_provider_id(None),
-                prompt=prompt
+                chat_provider_id=await self.plugin.context.get_current_chat_provider_id(None), prompt=prompt
             )
-            
+
             summary = response.completion_text.strip() if response.completion_text else conversation_preview[:200]
 
             return f"""🌙 晚安，{group_name}！今日回顾：
@@ -614,10 +612,9 @@ class BackgroundTasks:
             # 使用 AstrBot v4.x 推荐的 llm_generate 接口
             # umo 为 None 时使用默认 provider
             response = await self.plugin.context.llm_generate(
-                chat_provider_id=await self.plugin.context.get_current_chat_provider_id(None),
-                prompt=prompt
+                chat_provider_id=await self.plugin.context.get_current_chat_provider_id(None), prompt=prompt
             )
-            
+
             summary = response.completion_text.strip() if response.completion_text else conversation_preview[:200]
 
             return f"""🌙 晚安，{name}！今日回顾：
@@ -755,7 +752,7 @@ class BackgroundTasks:
             }
 
             llm_timeout = getattr(self.plugin.config, "llm_call_timeout", 60)
-            
+
             for i in range(5):
                 try:
                     # 使用 AstrBot v4.x 推荐的 tool_loop_agent 接口
@@ -765,9 +762,9 @@ class BackgroundTasks:
                             event=None,
                             chat_provider_id=await self.plugin.context.get_current_chat_provider_id(None),
                             contexts=messages,
-                            tool_call_timeout=llm_timeout
+                            tool_call_timeout=llm_timeout,
                         ),
-                        timeout=llm_timeout * 1.5, # 留出工具执行的时间
+                        timeout=llm_timeout * 1.5,  # 留出工具执行的时间
                     )
                 except asyncio.TimeoutError:
                     logger.warning(f"[Scriptor] 复盘 LLM 调用超时 (第{i+1}轮)")
@@ -863,34 +860,34 @@ class BackgroundTasks:
 
     async def run_heartbeat_loop(self):
         """定时执行 Heartbeat 任务（学习 CoPaw 的设计）
-        
+
         Heartbeat 是一个定时触发的主动任务系统：
         - 系统每隔一定时间（默认 30 分钟）检查 HEARTBEAT.md 文件
         - 如果文件有内容，就将其作为用户消息发送给 AI 执行
         - 执行结果可以发送到对应的对话框
-        
+
         三层架构：
         - 全局 HEARTBEAT.md：对所有用户和群聊生效
         - 群组 G_HEARTBEAT.md：只对该群聊生效
         - 个人 P_HEARTBEAT.md：只对该用户私聊生效
         """
         heartbeat_interval = getattr(self.plugin.config, "heartbeat_interval", 1800)  # 默认 30 分钟
-        
+
         while not self.plugin._is_terminating:
             try:
                 await asyncio.sleep(heartbeat_interval)
-                
+
                 if self.plugin._is_terminating:
                     break
-                
+
                 logger.info("[Scriptor] 开始执行 Heartbeat 任务...")
-                
+
                 await self._run_global_heartbeat()
                 await self._run_group_heartbeats()
                 await self._run_personal_heartbeats()
-                
+
                 logger.info("[Scriptor] Heartbeat 任务执行完成")
-                
+
             except asyncio.CancelledError:
                 break
             except Exception as e:
@@ -903,18 +900,18 @@ class BackgroundTasks:
             global_hb_path = self.plugin.data_dir / "templates" / "global" / "HEARTBEAT.md"
             if not global_hb_path.exists():
                 return
-            
+
             content = global_hb_path.read_text(encoding="utf-8").strip()
             if not content or content.startswith("#") or "暂无" in content:
                 return
-            
+
             logger.info("[Scriptor] 执行全局 Heartbeat 任务...")
-            
+
             result = await self._execute_heartbeat_task(content, "*", "global")
-            
+
             if result:
                 logger.info(f"[Scriptor] 全局 Heartbeat 结果: {result[:100]}...")
-                
+
         except Exception as e:
             logger.error(f"[Scriptor] 全局 Heartbeat 执行失败: {e}")
 
@@ -924,28 +921,28 @@ class BackgroundTasks:
             groups_dir = self.plugin.data_dir / "groups"
             if not groups_dir.exists():
                 return
-            
+
             for gid_dir in groups_dir.iterdir():
                 if not gid_dir.is_dir():
                     continue
-                
+
                 gid = gid_dir.name
                 hb_path = gid_dir / "G_HEARTBEAT.md"
-                
+
                 if not hb_path.exists():
                     continue
-                
+
                 content = hb_path.read_text(encoding="utf-8").strip()
                 if not content or content.startswith("#") or "暂无" in content:
                     continue
-                
+
                 logger.info(f"[Scriptor] 执行群组 {gid} Heartbeat 任务...")
-                
+
                 result = await self._execute_heartbeat_task(content, "*", gid)
-                
+
                 if result:
                     await self._send_heartbeat_result(result, gid, "group")
-                    
+
         except Exception as e:
             logger.error(f"[Scriptor] 群组 Heartbeat 执行失败: {e}")
 
@@ -955,57 +952,59 @@ class BackgroundTasks:
             profiles_dir = self.plugin.data_dir / "profiles"
             if not profiles_dir.exists():
                 return
-            
+
             for uid_dir in profiles_dir.iterdir():
                 if not uid_dir.is_dir():
                     continue
-                
+
                 uid = uid_dir.name
                 hb_path = uid_dir / "P_HEARTBEAT.md"
-                
+
                 if not hb_path.exists():
                     continue
-                
+
                 content = hb_path.read_text(encoding="utf-8").strip()
                 if not content or content.startswith("#") or "暂无" in content:
                     continue
-                
+
                 logger.info(f"[Scriptor] 执行用户 {uid} Heartbeat 任务...")
-                
+
                 result = await self._execute_heartbeat_task(content, uid, "private")
-                
+
                 if result:
                     await self._send_heartbeat_result(result, uid, "private")
-                    
+
         except Exception as e:
             logger.error(f"[Scriptor] 个人 Heartbeat 执行失败: {e}")
 
     async def _execute_heartbeat_task(self, task_content: str, uid: str, scope: str) -> str:
         """执行单个 Heartbeat 任务（含逾期任务主动询问）
-        
+
         Args:
             task_content: 任务内容（从 HEARTBEAT.md 读取）
             uid: 用户 ID（全局和群组时为 "*"）
             scope: 作用域 ("global", "group", "private")
-            
+
         Returns:
             执行结果文本
         """
         try:
             todo_context = ""
-            
+
             if uid != "*" and scope in ("private", "group"):
                 try:
                     from .todo_manager import TodoManager
-                    
-                    todo_manager = TodoManager(self.plugin.data_dir, scope="personal" if scope == "private" else "group")
-                    
+
+                    todo_manager = TodoManager(
+                        self.plugin.data_dir, scope="personal" if scope == "private" else "group"
+                    )
+
                     overdue_items = todo_manager.get_overdue_items(uid)
                     today_high_priority = todo_manager.get_today_high_priority_items(uid)
-                    
+
                     if overdue_items or today_high_priority:
                         todo_context = "\n\n【系统提示 - 任务状态检查】\n"
-                        
+
                         if overdue_items:
                             todo_context += "\n⚠️ **逾期任务（需要关注）**：\n"
                             for item in overdue_items[:3]:
@@ -1014,43 +1013,46 @@ class BackgroundTasks:
                             if len(overdue_items) > 3:
                                 todo_context += f"  ... 还有 {len(overdue_items) - 3} 个逾期任务\n"
                             todo_context += "\n请以符合你人设的口吻，自然地询问用户这些任务的进度。\n"
-                        
+
                         if today_high_priority:
                             todo_context += "\n🔥 **今日高优先级任务**：\n"
                             for item in today_high_priority[:3]:
                                 due_str = f" (截止: {item.due_date.strftime('%H:%M')})" if item.due_date else ""
                                 todo_context += f"  - {item.content[:50]}{due_str}\n"
                             todo_context += "\n请提醒用户关注这些重要任务。\n"
-                        
+
                 except Exception as e:
                     logger.warning(f"[Scriptor] 获取 TODO 状态失败: {e}")
-            
+
             enhanced_content = task_content + todo_context
-            
+
             messages = [
-                {"role": "system", "content": "你是一个正在执行定时任务的 AI 管家。请完成用户指定的任务并返回结果。如果系统提示了逾期任务或高优先级任务，请主动关心用户的进度。"},
+                {
+                    "role": "system",
+                    "content": "你是一个正在执行定时任务的 AI 管家。请完成用户指定的任务并返回结果。如果系统提示了逾期任务或高优先级任务，请主动关心用户的进度。",
+                },
                 {"role": "user", "content": enhanced_content},
             ]
-            
+
             llm_timeout = getattr(self.plugin.config, "llm_call_timeout", 60)
-            
+
             response = await asyncio.wait_for(
                 self.plugin.context.tool_loop_agent(
                     event=None,
                     chat_provider_id=await self.plugin.context.get_current_chat_provider_id(None),
                     contexts=messages,
-                    tool_call_timeout=llm_timeout
+                    tool_call_timeout=llm_timeout,
                 ),
                 timeout=llm_timeout * 1.5,
             )
-            
+
             if response and hasattr(response, "result_text"):
                 return response.result_text
             elif response and isinstance(response, str):
                 return response
-            
+
             return ""
-            
+
         except asyncio.TimeoutError:
             logger.warning(f"[Scriptor] Heartbeat 任务执行超时 (uid={uid}, scope={scope})")
             return ""
@@ -1060,31 +1062,31 @@ class BackgroundTasks:
 
     async def _send_heartbeat_result(self, result: str, target_id: str, scope: str):
         """发送 Heartbeat 执行结果到对应的对话框
-        
+
         Args:
             result: 执行结果
             target_id: 目标 ID（用户 ID 或群组 ID）
             scope: 作用域 ("group" 或 "private")
         """
         try:
-            from astrbot.api.message_components import Plain
             from astrbot.api.all import MessageChain
-            
+            from astrbot.api.message_components import Plain
+
             msg_content = f"⏰ **Heartbeat 任务结果**\n\n{result}"
             message_chain = MessageChain([Plain(msg_content)])
-            
+
             session_str = None
             if scope == "group":
                 session_str = f"webchat!{target_id}!{target_id}"
             elif scope == "private":
                 session_str = f"webchat!{target_id}!{target_id}"
-            
+
             if session_str:
                 success = await self.plugin.context.send_message(session_str, message_chain)
                 if success:
                     logger.info(f"[Scriptor] Heartbeat 结果已发送到 {scope}:{target_id}")
                 else:
                     logger.warning(f"[Scriptor] Heartbeat 结果发送失败: {scope}:{target_id}")
-                    
+
         except Exception as e:
             logger.error(f"[Scriptor] 发送 Heartbeat 结果失败: {e}")

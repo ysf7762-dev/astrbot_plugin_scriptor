@@ -371,8 +371,8 @@ class EventsMixin(BaseMixin):
                 f"⏰ 此确认请求将在 2 分钟后自动过期。"
             )
 
-            from astrbot.api.message_components import Plain
             from astrbot.api.all import MessageChain
+            from astrbot.api.message_components import Plain
 
             message_chain = MessageChain([Plain(msg)])
             success = await self.context.send_message(event.session, message_chain)
@@ -488,8 +488,8 @@ class EventsMixin(BaseMixin):
         - @ 提及转换
         - 消息引用
         """
-        from astrbot.api.message_components import Plain
         from astrbot.api.all import MessageChain
+        from astrbot.api.message_components import Plain
 
         is_llm_result = result.is_llm_result() if hasattr(result, "is_llm_result") else False
         is_model_result = result.is_model_result() if hasattr(result, "is_model_result") else False

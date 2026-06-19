@@ -44,9 +44,9 @@ class EmbeddingConfig(BaseModel):
     def validate_embedding_provider(cls, v):
         if v not in ["local", "api"]:
             import logging
+
             logging.getLogger("scriptor").warning(
-                f"[Scriptor] embedding_provider 值 '{v}' 无效，已自动回退为 'local'。"
-                f"有效值: local, api"
+                f"[Scriptor] embedding_provider 值 '{v}' 无效，已自动回退为 'local'。" f"有效值: local, api"
             )
             return "local"
         return v
@@ -67,9 +67,9 @@ class RerankConfig(BaseModel):
     def validate_rerank_provider(cls, v):
         if v not in ["local", "api"]:
             import logging
+
             logging.getLogger("scriptor").warning(
-                f"[Scriptor] rerank_provider 值 '{v}' 无效，已自动回退为 'api'。"
-                f"有效值: local, api"
+                f"[Scriptor] rerank_provider 值 '{v}' 无效，已自动回退为 'api'。" f"有效值: local, api"
             )
             return "api"
         return v
@@ -101,7 +101,9 @@ class SearchConfig(BaseModel):
     web_search_enabled: bool = Field(False, description="是否启用网页搜索工具（需手动开启）")
     searxng_base_url: str = Field("", description="SearXNG 搜索引擎地址（需自行配置）")
     searxng_secret: Optional[str] = Field(default=None, description="SearXNG 密钥")
-    searxng_default_engines: str = Field("google,baidu,wikipedia,sogou,quark,brave,startpage", description="默认启用的搜索引擎")
+    searxng_default_engines: str = Field(
+        "google,baidu,wikipedia,sogou,quark,brave,startpage", description="默认启用的搜索引擎"
+    )
     searxng_max_results: int = Field(20, ge=1, le=50, description="SearXNG 最大搜索结果数")
     searxng_timeout: int = Field(10, ge=5, le=60, description="SearXNG 请求超时时间（秒）")
     search_archive_enabled: bool = Field(True, description="是否启用搜索结果归档")
@@ -488,9 +490,8 @@ class ScriptorConfigPydantic(BaseModel):
                 return cls.load_from_flat_dict(config_dict)
             except Exception as e:
                 import logging
-                logging.getLogger("scriptor").warning(
-                    f"[Scriptor] 配置文件加载失败，已回退到默认配置: {e}"
-                )
+
+                logging.getLogger("scriptor").warning(f"[Scriptor] 配置文件加载失败，已回退到默认配置: {e}")
                 return cls()
         return cls()
 

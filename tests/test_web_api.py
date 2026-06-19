@@ -72,6 +72,7 @@ class TestHealthAndStatus:
     async def test_health_check(self, mock_shared_state):
         """测试 /api/health 健康检查端点"""
         from fastapi.testclient import TestClient
+
         from web.api import app
 
         client = TestClient(app)
@@ -86,6 +87,7 @@ class TestHealthAndStatus:
     async def test_setup_status(self, mock_shared_state):
         """测试 /api/setup/status 设置状态端点"""
         from fastapi.testclient import TestClient
+
         from web.api import app
 
         client = TestClient(app)
@@ -112,6 +114,7 @@ class TestAuthentication:
     async def test_csrf_token_generation(self, mock_shared_state):
         """测试 CSRF 令牌生成"""
         from fastapi.testclient import TestClient
+
         from web.api import app
 
         client = TestClient(app)
@@ -128,6 +131,7 @@ class TestAuthentication:
     async def test_csrf_token_verification(self, mock_shared_state):
         """测试 CSRF 令牌验证"""
         from fastapi.testclient import TestClient
+
         from web.api import app
 
         client = TestClient(app)
@@ -149,6 +153,7 @@ class TestAuthentication:
     async def test_invalid_csrf_token(self, mock_shared_state):
         """测试无效 CSRF 令牌（GET 端点总是返回新令牌）"""
         from fastapi.testclient import TestClient
+
         from web.api import app
 
         client = TestClient(app)
@@ -192,6 +197,7 @@ class TestMemoryManagementAPI:
     async def test_list_global_memory(self, mock_shared_state, setup_memory_files):
         """测试获取全局记忆列表"""
         from fastapi.testclient import TestClient
+
         from web.api import app
 
         with patch("web.api.get_data_dir_safe", return_value=setup_memory_files.parent):
@@ -212,6 +218,7 @@ class TestMemoryManagementAPI:
     async def test_read_memory_file(self, mock_shared_state, setup_memory_files):
         """测试读取单个记忆文件"""
         from fastapi.testclient import TestClient
+
         from web.api import app
 
         with patch("web.api.get_data_dir_safe", return_value=setup_memory_files.parent):
@@ -230,6 +237,7 @@ class TestKnowledgeBaseAPI:
     async def test_get_knowledge_items(self, mock_shared_state):
         """测试获取知识库条目列表"""
         from fastapi.testclient import TestClient
+
         from web.api import app
 
         client = TestClient(app)
@@ -247,6 +255,7 @@ class TestKnowledgeBaseAPI:
     async def test_knowledge_stats(self, mock_shared_state):
         """测试知识库统计信息"""
         from fastapi.testclient import TestClient
+
         from web.api import app
 
         client = TestClient(app)
@@ -264,6 +273,7 @@ class TestArchiveAPI:
     async def test_list_archives(self, mock_shared_state):
         """测试列出档案馆表格"""
         from fastapi.testclient import TestClient
+
         from web.api import app
 
         client = TestClient(app)
@@ -285,6 +295,7 @@ class TestSecurityMechanisms:
     async def test_security_headers(self, mock_shared_state):
         """测试安全响应头"""
         from fastapi.testclient import TestClient
+
         from web.api import app
 
         client = TestClient(app)
@@ -312,6 +323,7 @@ class TestSecurityMechanisms:
     async def test_request_size_limit(self, mock_shared_state):
         """测试请求体大小限制"""
         from fastapi.testclient import TestClient
+
         from web.api import MAX_REQUEST_SIZE, app
 
         client = TestClient(app)
@@ -337,6 +349,7 @@ class TestErrorHandling:
     async def test_not_found_endpoint(self, mock_shared_state):
         """测试 404 处理"""
         from fastapi.testclient import TestClient
+
         from web.api import app
 
         client = TestClient(app)
@@ -348,6 +361,7 @@ class TestErrorHandling:
     async def test_method_not_allowed(self, mock_shared_state):
         """测试 405 方法不允许"""
         from fastapi.testclient import TestClient
+
         from web.api import app
 
         client = TestClient(app)
@@ -359,6 +373,7 @@ class TestErrorHandling:
     async def test_missing_auth_header(self, mock_shared_state):
         """测试缺少认证头"""
         from fastapi.testclient import TestClient
+
         from web.api import app
 
         client = TestClient(app)
@@ -377,6 +392,7 @@ class TestConfigurationAPI:
     async def test_get_config(self, mock_shared_state):
         """测试获取配置"""
         from fastapi.testclient import TestClient
+
         from web.api import app
 
         client = TestClient(app)
@@ -398,6 +414,7 @@ class TestMaintenanceAPI:
     async def test_reindex_trigger(self, mock_shared_state):
         """测试触发重新索引"""
         from fastapi.testclient import TestClient
+
         from web.api import app
 
         client = TestClient(app)
@@ -422,6 +439,7 @@ class TestPerformanceMetrics:
     async def test_get_metrics(self, mock_shared_state):
         """测试获取性能指标"""
         from fastapi.testclient import TestClient
+
         from web.api import app
 
         client = TestClient(app)
@@ -439,6 +457,7 @@ class TestPerformanceMetrics:
     async def test_performance_stats(self, mock_shared_state):
         """测试性能统计"""
         from fastapi.testclient import TestClient
+
         from web.api import app
 
         client = TestClient(app)
@@ -456,6 +475,7 @@ class TestIntegrationScenarios:
     async def test_complete_workflow(self, mock_shared_state, temp_data_dir):
         """测试完整工作流：认证 -> CSRF -> 操作"""
         from fastapi.testclient import TestClient
+
         from web.api import app
 
         client = TestClient(app)
@@ -481,6 +501,7 @@ class TestEdgeCases:
     async def test_empty_request_body(self, mock_shared_state):
         """测试空请求体"""
         from fastapi.testclient import TestClient
+
         from web.api import app
 
         client = TestClient(app)
@@ -495,6 +516,7 @@ class TestEdgeCases:
     async def test_special_characters_in_path(self, mock_shared_state):
         """测试路径中的特殊字符"""
         from fastapi.testclient import TestClient
+
         from web.api import app
 
         client = TestClient(app)
@@ -513,6 +535,7 @@ class TestEdgeCases:
     async def test_unicode_handling(self, mock_shared_state):
         """测试 Unicode 字符处理"""
         from fastapi.testclient import TestClient
+
         from web.api import app
 
         client = TestClient(app)

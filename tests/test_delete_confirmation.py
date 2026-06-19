@@ -6,16 +6,16 @@
 3. 完整的确认/拒绝流程模拟
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.pending_tasks import (
+    PendingTask,
+    PendingTaskStatus,
     PendingTaskStore,
     PendingTaskType,
-    PendingTaskStatus,
-    PendingTask,
     get_pending_task_store,
     init_pending_task_store,
 )
@@ -90,6 +90,7 @@ def test_pending_task_expiration():
     assert store.has_pending_task("session_exp") == True, "刚添加的任务应存在"
 
     import time
+
     time.sleep(0.15)  # 等待超过超时时间
 
     # 过期后获取应返回 None
@@ -117,39 +118,39 @@ def test_file_delete_interception_logic():
         config = MockConfig()
 
     # 模拟需要确认的情况
-    config_enabled = getattr(MockPlugin.config, 'require_delete_confirmation', True)
+    config_enabled = getattr(MockPlugin.config, "require_delete_confirmation", True)
     force = False
 
     if config_enabled and not force:
         from core.pending_tasks import PendingTaskType, get_pending_task_store
-        
+
         init_pending_task_store()
         store = get_pending_task_store()
-        
+
         # 模拟 file_delete 内部调用 add_task
         store.add_task("test_session", PendingTaskType.FILE_DELETE, "/test/sensitive.md")
-        
+
         result = {
             "status": "pending_confirmation",
             "message": "操作已挂起，等待用户通过 /delete 命令确认",
             "file_path": "/test/sensitive.md",
             "session_id": "test_session",
         }
-        
+
         assert result["status"] == "pending_confirmation", "应返回 pending_confirmation 状态"
-        
+
         # 验证任务已被添加到存储中
         assert store.has_pending_task("test_session") == True, "任务应被挂起"
-        
+
         print("✅ 拦截逻辑: 通过 (返回 pending_confirmation)")
-        
+
         # 模拟用户确认
         success, confirmed_task = store.confirm_task("test_session")
         assert success == True, "用户确认应成功"
         assert confirmed_task.file_path == "/test/sensitive.md", "文件路径应匹配"
-        
+
         print("✅ 用户确认流程: 通过")
-    
+
     # 模拟强制执行（跳过确认）
     force_result = "✅ 文件已成功删除: /test/normal.md"
     if not isinstance(force_result, dict):
@@ -198,10 +199,10 @@ def test_full_workflow_simulation():
     # Step 3b: 场景 B - 用户取消（重新开始）
     print("\n📋 Step 3b: 模拟用户取消场景...")
     task_b = store.add_task(session_id, PendingTaskType.FILE_DELETE, "NOTES.md")
-    
+
     message_stripped = "算了，不删了"
     is_delete_cmd = message_stripped.strip().lower() in ("/delete", "delete")
-    
+
     if not is_delete_cmd:
         _, rejected = store.reject_task(session_id)
         if rejected:
@@ -229,10 +230,12 @@ if __name__ == "__main__":
     except AssertionError as e:
         print(f"\n❌ 测试失败: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
     except Exception as e:
         print(f"\n❌ 测试异常: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

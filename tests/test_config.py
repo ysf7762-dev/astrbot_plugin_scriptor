@@ -1,7 +1,6 @@
 # tests/test_config.py
 """Scriptor 配置模块测试"""
 
-
 import pytest
 
 # 使用直接导入方式（通过 conftest.py 设置的 sys.path）

@@ -60,8 +60,7 @@ def create_isolated_import(project_root: Path, module_name: str, file_path: Path
     except ImportError as e:
         # 如果仍然遇到相对导入问题，提供更清晰的错误信息
         raise ImportError(
-            f"Failed to import {module_name}: {e!s}. "
-            f"This may be due to circular dependencies in core/__init__.py"
+            f"Failed to import {module_name}: {e!s}. " f"This may be due to circular dependencies in core/__init__.py"
         ) from e
 
     return module

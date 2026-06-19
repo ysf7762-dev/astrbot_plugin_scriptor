@@ -1439,7 +1439,7 @@ class ToolsMixin(BaseMixin):
         在档案馆中执行 SQL 查询。
 
         系统会自动查询当前可访问的所有档案库（个人/群组/全局），并合并结果。
-        
+
         重要：返回结果包含原始数据表格，你必须在回复中展示这个表格，以便用户可以对照数据验证。
 
         Args:
@@ -2022,11 +2022,12 @@ class ToolsMixin(BaseMixin):
             target_id = uid
 
         try:
-            from ..core.todo_manager import TodoManager
             from datetime import datetime as dt
 
+            from ..core.todo_manager import TodoManager
+
             manager = TodoManager(self.data_dir, scope=scope)
-            
+
             parsed_due_date = None
             if due_date:
                 parsed_due_date = self._parse_todo_datetime(due_date)
@@ -2036,10 +2037,11 @@ class ToolsMixin(BaseMixin):
                 reminder_time = parsed_due_date
                 if advance_minutes > 0:
                     reminder_time = parsed_due_date - timedelta(minutes=advance_minutes)
-                
-                from ..core.scheduler import ScheduledTask
+
                 import uuid
-                
+
+                from ..core.scheduler import ScheduledTask
+
                 task = ScheduledTask(
                     task_id=str(uuid.uuid4()),
                     trigger_time=reminder_time.timestamp(),
@@ -2063,7 +2065,7 @@ class ToolsMixin(BaseMixin):
             )
 
             result_lines = [f"✅ 已添加待办事项：", f"   内容：{content}", f"   ID：{item.id}"]
-            
+
             if parsed_due_date:
                 result_lines.append(f"   截止时间：{parsed_due_date.strftime('%Y-%m-%d %H:%M')}")
             if advance_minutes > 0:
@@ -2075,7 +2077,7 @@ class ToolsMixin(BaseMixin):
                 result_lines.append(f"   优先级：{priority_labels.get(priority, '中')}")
             if need_reminder and linked_reminder_id:
                 result_lines.append(f"   🔔 已设置自动提醒")
-            
+
             result_lines.append(f"\n使用 `complete_todo` 标记完成，或 `update_todo` 修改内容。")
 
             return "\n".join(result_lines)
@@ -2088,29 +2090,29 @@ class ToolsMixin(BaseMixin):
         """解析待办时间字符串"""
         import re
         from datetime import datetime as dt
-        
+
         time_str = time_str.strip()
         now = dt.now()
-        
+
         if re.match(r"^\d{1,2}:\d{2}$", time_str):
             hour, minute = map(int, time_str.split(":"))
             target = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
             if target <= now:
                 target += timedelta(days=1)
             return target
-        
+
         if re.match(r"^\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}$", time_str):
             try:
                 return dt.strptime(time_str, "%Y-%m-%d %H:%M")
             except ValueError:
                 pass
-        
+
         if re.match(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$", time_str):
             try:
                 return dt.strptime(time_str, "%Y-%m-%d %H:%M:%S")
             except ValueError:
                 pass
-        
+
         return None
 
     @filter.llm_tool()
@@ -2206,11 +2208,12 @@ class ToolsMixin(BaseMixin):
             target_id = uid
 
         try:
-            from ..core.todo_manager import TodoManager
             from datetime import datetime as dt
 
+            from ..core.todo_manager import TodoManager
+
             manager = TodoManager(self.data_dir, scope=scope)
-            
+
             parsed_due_date = None
             if due_date:
                 parsed_due_date = self._parse_todo_datetime(due_date)
@@ -2390,8 +2393,8 @@ class ToolsMixin(BaseMixin):
             else:
                 target_id = uid
 
-            from pathlib import Path
             import re
+            from pathlib import Path
 
             if scope == "personal":
                 archive_dir = self.data_dir / "profiles" / target_id / "TODOed"
@@ -2434,12 +2437,14 @@ class ToolsMixin(BaseMixin):
                             if keyword.lower() not in line.lower():
                                 continue
 
-                        all_results.append({
-                            "file": filename,
-                            "year": file_year,
-                            "month": file_month,
-                            "content": line.strip(),
-                        })
+                        all_results.append(
+                            {
+                                "file": filename,
+                                "year": file_year,
+                                "month": file_month,
+                                "content": line.strip(),
+                            }
+                        )
 
                         if len(all_results) >= MAX_RESULTS:
                             break
@@ -2459,7 +2464,7 @@ class ToolsMixin(BaseMixin):
                     hint_parts.append(f"{month}月")
                 if keyword:
                     hint_parts.append(f"关键词'{keyword}'")
-                
+
                 hint = "、".join(hint_parts) if hint_parts else "指定条件"
                 return f"📋 未找到匹配的历史待办记录（{hint}）"
 
@@ -2477,7 +2482,9 @@ class ToolsMixin(BaseMixin):
 
             if len(all_results) >= MAX_RESULTS:
                 lines.append("")
-                lines.append(f"⚠️ 找到大量记录，已截断显示最近的 {MAX_RESULTS} 条。请提供更精确的 year/month 或 keyword 以缩小搜索范围。")
+                lines.append(
+                    f"⚠️ 找到大量记录，已截断显示最近的 {MAX_RESULTS} 条。请提供更精确的 year/month 或 keyword 以缩小搜索范围。"
+                )
 
             return "\n".join(lines)
 

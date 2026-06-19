@@ -98,7 +98,9 @@ class TestLearningCommands:
         assert "async def cmd_end_learning" in mixin_content, "应在 learning_mixin.py 中包含 cmd_end_learning 函数"
         assert "async def cmd_start_teaching" in mixin_content, "应在 learning_mixin.py 中包含 cmd_start_teaching 函数"
         assert "async def cmd_end_teaching" in mixin_content, "应在 learning_mixin.py 中包含 cmd_end_teaching 函数"
-        assert "async def cmd_learning_status" in mixin_content, "应在 learning_mixin.py 中包含 cmd_learning_status 函数"
+        assert (
+            "async def cmd_learning_status" in mixin_content
+        ), "应在 learning_mixin.py 中包含 cmd_learning_status 函数"
 
         # 验证 Mixin 中不包含装饰器（避免指令冲突）
         assert '@filter.command("开始学习")' not in mixin_content, "应避免在 Mixin 中重复注册 /开始学习 命令"

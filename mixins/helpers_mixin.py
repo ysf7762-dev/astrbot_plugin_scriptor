@@ -305,8 +305,8 @@ class HelpersMixin(BaseMixin):
         """
         import re
 
-        from astrbot.api.message_components import At, Plain
         from astrbot.api.all import MessageChain
+        from astrbot.api.message_components import At, Plain
 
         chain = MessageChain()
         pattern = r"\[@.*?\s*\(UID:\s*([a-zA-Z0-9_]+)\s*\)\]"
@@ -556,8 +556,7 @@ class HelpersMixin(BaseMixin):
 
             # 使用 AstrBot v4.x 推荐的 llm_generate 接口
             response = await self.context.llm_generate(
-                chat_provider_id=await self.context.get_current_chat_provider_id(None),
-                prompt=prompt
+                chat_provider_id=await self.context.get_current_chat_provider_id(None), prompt=prompt
             )
 
             result_text = response.completion_text.strip() if response.completion_text else ""

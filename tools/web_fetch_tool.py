@@ -235,12 +235,15 @@ class WebFetcher:
             )
 
         try:
-            async with aiohttp.ClientSession() as session, session.get(
-                url,
-                headers={"User-Agent": self.config.user_agent},
-                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds),
-                max_redirects=self.config.max_redirects,
-            ) as resp:
+            async with (
+                aiohttp.ClientSession() as session,
+                session.get(
+                    url,
+                    headers={"User-Agent": self.config.user_agent},
+                    timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds),
+                    max_redirects=self.config.max_redirects,
+                ) as resp,
+            ):
                 self._request_count += 1
 
                 html = await resp.read()

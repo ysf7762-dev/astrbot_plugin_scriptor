@@ -189,11 +189,7 @@ class PendingTaskStore:
         Returns:
             清理的任务数量
         """
-        expired_keys = [
-            sid
-            for sid, task in self._tasks.items()
-            if task.is_expired(self._timeout_seconds)
-        ]
+        expired_keys = [sid for sid, task in self._tasks.items() if task.is_expired(self._timeout_seconds)]
         for key in expired_keys:
             self._tasks[key].status = PendingTaskStatus.EXPIRED
             del self._tasks[key]

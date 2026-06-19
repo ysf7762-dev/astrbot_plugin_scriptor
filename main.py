@@ -60,7 +60,9 @@ from .core.group_manager import GroupManager
 from .core.identity_manager import IdentityManager
 from .core.knowledge_base import KnowledgeBase
 from .core.knowledge_graph import KnowledgeGraph
-from .core.learning_manager import LearningManager, CognitiveState
+
+from .core.learning_manager import LearningManager  # isort: split
+from .core.learning_manager import CognitiveState
 from .core.memory_manager import MemoryManager
 from .core.message_buffering import MessageBuffer
 from .core.message_sanitizer import MessageSanitizer
@@ -123,7 +125,7 @@ class ScriptorPlugin(
         # 首先尝试从正确的配置文件加载配置
         import json
         import os
-        
+
         # 检查是否存在配置文件（按优先级查找）
         # 首选: data/config/astrbot_plugin_scriptor_config.json（AstrBot 规范）
         # 备选: data/config/Scriptor_config.json（旧版本兼容）
@@ -133,7 +135,7 @@ class ScriptorPlugin(
             self.data_dir.parent.parent / "config" / "astrbot_plugin_scriptor_config.json",
             self.data_dir.parent.parent / "config" / "Scriptor_config.json",
         ]
-        
+
         correct_config_path = None
         for candidate in config_candidates:
             logger.info(f"[Scriptor] 尝试加载配置文件：{candidate}")
@@ -151,21 +153,21 @@ class ScriptorPlugin(
                     logger.warning(f"[Scriptor] 从配置文件加载失败：{e}")
                     correct_config = None
                     correct_config_path = None
-        
+
         if correct_config is None and correct_config_path is None:
             logger.warning(f"[Scriptor] 所有候选配置文件都不存在，使用默认配置")
             correct_config = None
-        
+
         # 使用正确的配置或默认配置
         if correct_config:
             # 使用 load_from_flat_dict 方法将扁平字典转换为嵌套配置
             self.config = ScriptorConfigPydantic.load_from_flat_dict(correct_config)
-            
+
             # 同步配置到 Scriptor 配置文件（用于 Scriptor WebUI）
             try:
                 scriptor_config_file = self.data_dir / "config.json"
                 scriptor_config_file.parent.mkdir(parents=True, exist_ok=True)
-                
+
                 # 将嵌套配置转换为扁平配置
                 flat_config = {}
                 for section_name, section_config in self.config.dict().items():
@@ -174,7 +176,7 @@ class ScriptorPlugin(
                             flat_config[key] = value
                     else:
                         flat_config[section_name] = section_config
-                
+
                 with open(scriptor_config_file, "w", encoding="utf-8") as f:
                     json.dump(flat_config, f, ensure_ascii=False, indent=2)
                 logger.info(f"[Scriptor] 配置已同步到 Scriptor 配置文件: {scriptor_config_file}")
@@ -291,7 +293,9 @@ class ScriptorPlugin(
                         fetch_top_n=self.config.web_fetch_top_n,
                         default_engines=self.config.searxng_default_engines,
                     )
-                    logger.info(f"[Scriptor] 网页搜索工具已初始化 (SearXNG: {searxng_url}, 自动读取: {self.config.web_fetch_top_n} 个网页)")
+                    logger.info(
+                        f"[Scriptor] 网页搜索工具已初始化 (SearXNG: {searxng_url}, 自动读取: {self.config.web_fetch_top_n} 个网页)"
+                    )
             except Exception as e:
                 logger.error(f"[Scriptor] 网页搜索工具初始化失败：{e}")
                 self.web_search_tool = None
@@ -300,7 +304,7 @@ class ScriptorPlugin(
         self.web_fetch_tool = None
         try:
             from .tools.web_fetch_tool import WebFetcher
-            
+
             self.web_fetch_tool = WebFetcher()
             logger.info("[Scriptor] WebFetch 工具已初始化（可访问完整网页）")
         except Exception as e:
@@ -567,86 +571,86 @@ class ScriptorPlugin(
     async def _sync_config_from_disk(self):
         """
         从磁盘同步配置（用于捕获通过 AstrBot 官方 Web UI 进行的配置更改）
-        
+
         检查配置文件的修改时间，如果有变化则重新加载配置
         """
         import time
-        
+
         current_time = time.time()
         if current_time - self._last_config_sync_time < self._config_sync_interval:
             return
-        
+
         try:
             config_file = self.data_dir / "config.json"
             if not config_file.exists():
                 return
-            
+
             # 检查文件修改时间
             config_mtime = config_file.stat().st_mtime
             if config_mtime <= self._last_config_sync_time:
                 return
-            
+
             import json
+
             with open(config_file, "r", encoding="utf-8") as f:
                 new_config = json.load(f)
-            
+
             # 检查配置是否变化
             old_config_dict = self.config.dict()
             if new_config == old_config_dict:
                 self._last_config_sync_time = current_time
                 return
-            
+
             logger.info("[Scriptor] 检测到配置更新，重新加载配置...")
             self.config = ScriptorConfigPydantic(**new_config)
             self._last_config_sync_time = current_time
-            
+
             # 更新全局配置
             from .tools.common.text_utils import set_global_config
+
             set_global_config(self.config)
-            
+
             # 同步更新 shared_state 中的配置引用
-            from .web.shared_state import set_shared_state, _shared_state
+            from .web.shared_state import _shared_state, set_shared_state
+
             _shared_state["config"] = self.config
-            
+
             # 同步配置到 WebUI 的 config.json 文件
             try:
                 config_dump = self.data_dir / "config.json"
-                config_dump.write_text(
-                    json.dumps(self.config.dict(), indent=4, ensure_ascii=False),
-                    encoding="utf-8"
-                )
+                config_dump.write_text(json.dumps(self.config.dict(), indent=4, ensure_ascii=False), encoding="utf-8")
                 logger.info("[Scriptor] 已同步配置到 Web UI config.json")
             except Exception as sync_err:
                 logger.warning(f"[Scriptor] 同步配置到 Web UI 失败: {sync_err}")
-            
+
             # 重新初始化依赖配置的组件
             await self._reload_config_dependent_components()
-            
+
             logger.info("[Scriptor] 配置已重新加载")
-            
+
         except Exception as e:
             logger.error(f"[Scriptor] 配置同步失败：{e}")
-    
+
     async def _reload_config_dependent_components(self):
         """
         重新加载依赖配置的组件
-        
+
         目前主要重新初始化网页搜索工具
         """
         try:
             # 重新初始化网页搜索工具
             if self.config.web_search_enabled:
                 from .tools.web_search_tool import WebSearchTool
-                
+
                 searxng_url = self.config.searxng_base_url
                 if searxng_url:
                     # 关闭旧的搜索工具
-                    if self.web_search_tool and hasattr(self.web_search_tool, 'client'):
+                    if self.web_search_tool and hasattr(self.web_search_tool, "client"):
                         try:
                             await self.web_search_tool.client.close()
                         except Exception:
                             pass
-                    
+
                     # 创建新的搜索工具
                     self.web_search_tool = WebSearchTool(
                         searxng_base_url=searxng_url,
@@ -663,17 +667,18 @@ class ScriptorPlugin(
                     logger.warning("[Scriptor] SearXNG 地址未配置，网页搜索功能将不可用")
                     self.web_search_tool = None
             else:
-                if self.web_search_tool and hasattr(self.web_search_tool, 'client'):
+                if self.web_search_tool and hasattr(self.web_search_tool, "client"):
                     try:
                         await self.web_search_tool.client.close()
                     except Exception:
                         pass
                 self.web_search_tool = None
                 logger.info("[Scriptor] 网页搜索功能已禁用")
-            
+
             # 重新初始化 SmartSender
-            if hasattr(self, 'smart_sender'):
+            if hasattr(self, "smart_sender"):
                 from .core.smart_sender import SmartSender
+
                 self.smart_sender = SmartSender(
                     enabled=self.config.smart_split_enabled,
                     only_llm=self.config.smart_split_only_llm,
@@ -689,9 +694,9 @@ class ScriptorPlugin(
                     group_reply=self.config.smart_split_group_reply,
                 )
                 logger.info("[Scriptor] SmartSender 已重新初始化")
-            
+
             # 可以在这里添加其他需要重新初始化的组件
-            
+
         except Exception as e:
             logger.error(f"[Scriptor] 重新加载组件失败：{e}")
 
@@ -943,7 +948,7 @@ class ScriptorPlugin(
     async def _config_sync_handler(self, event: AstrMessageEvent):
         """
         配置同步事件处理器
-        
+
         定期检查并同步配置文件（每 5 分钟最多一次）
         这样可以捕获通过 AstrBot 官方 Web UI 进行的配置更改
         """
@@ -1094,7 +1099,9 @@ class ScriptorPlugin(
             yield result
 
     @filter.command("reset_identity")
-    async def reset_identity(self, event: AstrMessageEvent, reset_token: str = None, step: str = None, code: str = None):
+    async def reset_identity(
+        self, event: AstrMessageEvent, reset_token: str = None, step: str = None, code: str = None
+    ):
         async for result in super().cmd_reset_identity(event, reset_token=reset_token, step=step, code=code):
             yield result
 
@@ -1102,9 +1109,6 @@ class ScriptorPlugin(
     async def search(self, event: AstrMessageEvent, *, remainder: str = ""):
         async for result in super().cmd_search(event, remainder=remainder):
             yield result
-
-
-
 
     # ==================== 生命周期方法 ====================
 
@@ -1149,5 +1153,3 @@ class ScriptorPlugin(
             logger.warning("[Scriptor] 插件卸载被取消")
         except (OSError, RuntimeError) as e:
             logger.error(f"[Scriptor] 插件卸载清理失败: {e}")
-
-

@@ -227,7 +227,8 @@ class AstrBotContractChecker:
         for mixin_info in self._mixin_methods.values():
             # 将 CamelCase 转换为 snake_case: LearningMixin -> learning_mixin
             import re
-            snake_name = re.sub(r'(?<!^)(?=[A-Z])', '_', mixin_info.name).lower()
+
+            snake_name = re.sub(r"(?<!^)(?=[A-Z])", "_", mixin_info.name).lower()
             mixin_file = self.plugin_root / "mixins" / f"{snake_name}.py"
             if mixin_file.exists():
                 source = mixin_file.read_text(encoding="utf-8")
@@ -294,9 +295,7 @@ class AstrBotContractChecker:
                     elif self._main_methods[proxy_name].has_event_decorator:
                         continue  # 有事件装饰器，也检查通过（可能是事件代理）
 
-                errors.append(
-                    f"Mixin 方法 '{mixin_method_name}' 在 main.py 中缺少代理方法"
-                )
+                errors.append(f"Mixin 方法 '{mixin_method_name}' 在 main.py 中缺少代理方法")
 
         return {
             "passed": len(errors) == 0,
@@ -447,7 +446,8 @@ class AstrBotContractChecker:
         for mixin_info in self._mixin_methods.values():
             # 将 CamelCase 转换为 snake_case: LearningMixin -> learning_mixin
             import re
-            snake_name = re.sub(r'(?<!^)(?=[A-Z])', '_', mixin_info.name).lower()
+
+            snake_name = re.sub(r"(?<!^)(?=[A-Z])", "_", mixin_info.name).lower()
             mixin_file = self.plugin_root / "mixins" / f"{snake_name}.py"
             if mixin_file.exists():
                 mixin_source = mixin_file.read_text(encoding="utf-8")

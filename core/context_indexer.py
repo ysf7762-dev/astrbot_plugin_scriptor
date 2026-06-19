@@ -136,7 +136,7 @@ class ContextIndexer:
 
     def _scan_personal_nodes(self, uid: str, group_id: str = "private") -> List[ContextNode]:
         """扫描个人记忆目录
-        
+
         只索引需要渐进式披露的文件，已全量加载的文件不在此处索引：
         - 已全量加载：P_SOUL.md, P_PROFILE.md, P_AGENTS.md, P_TODO.md, P_BOOTSTRAP.md, P_HEARTBEAT.md
         - 渐进式披露：P_SOP.md, P_MEMORY.md, NOTES.md, CONTEXT.md
@@ -160,7 +160,7 @@ class ContextIndexer:
                 continue
 
             filename = md_file.name
-            
+
             if filename not in priority_map:
                 continue
 
@@ -210,7 +210,7 @@ class ContextIndexer:
 
     def _scan_group_nodes(self, group_id: str) -> List[ContextNode]:
         """扫描群组记忆目录
-        
+
         只索引需要渐进式披露的文件，已全量加载的文件不在此处索引：
         - 已全量加载：G_SOUL.md, G_PROFILE.md, G_GROUP.md, G_TODO.md, G_BOOTSTRAP.md, G_HEARTBEAT.md
         - 渐进式披露：G_SOP.md, G_MEMORY.md, NOTES.md
@@ -233,7 +233,7 @@ class ContextIndexer:
                 continue
 
             filename = md_file.name
-            
+
             if filename not in priority_map:
                 continue
 
@@ -323,7 +323,7 @@ class ContextIndexer:
 
     def _scan_global_nodes(self) -> List[ContextNode]:
         """扫描全局共享目录
-        
+
         只索引需要渐进式披露的文件，已全量加载的文件不在此处索引：
         - 已全量加载：SOUL.md, HEARTBEAT.md
         - 渐进式披露：SOP.md, MEMORY.md
@@ -344,7 +344,7 @@ class ContextIndexer:
                 continue
 
             filename = md_file.name
-            
+
             if filename not in priority_map:
                 continue
 

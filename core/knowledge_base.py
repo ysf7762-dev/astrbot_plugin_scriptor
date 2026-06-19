@@ -204,6 +204,7 @@ class KnowledgeBase:
     def _strip_title_suffix(self, title: str) -> str:
         """去除标题中的括号后缀（如"更新版""修订版"）"""
         import re as _re
+
         return _re.sub(r"[（\(][^）\)]*[）\)]", "", title).strip()
 
     def _deduplicate(self):

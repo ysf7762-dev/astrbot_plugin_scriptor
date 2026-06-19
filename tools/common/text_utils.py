@@ -7,6 +7,7 @@ from typing import Any, Callable, List
 
 try:
     import jieba
+
     JIEBA_AVAILABLE = True
 except ImportError:
     JIEBA_AVAILABLE = False
@@ -271,7 +272,7 @@ class SmartMemoryTrimmer:
 def tokenize_for_bm25(text: str) -> List[str]:
     """
     中英文分词（用于BM25）
-    
+
     使用 jieba 进行中文分词，英文按空格分词。
     如果 jieba 不可用，则回退到简单的正则分词。
 
@@ -283,7 +284,7 @@ def tokenize_for_bm25(text: str) -> List[str]:
     """
     if not text:
         return []
-    
+
     if JIEBA_AVAILABLE:
         # 使用 jieba 进行中文分词
         # cut_for_search 模式适合搜索引擎，会对长词再切分

@@ -260,6 +260,7 @@ class MemoryManager:
 
         try:
             import base64
+
             image_b64 = base64.b64encode(image_data).decode("utf-8")
             image_url = f"data:image/jpeg;base64,{image_b64}"
 
@@ -409,7 +410,9 @@ class MemoryManager:
                 if daily_note_file.exists() and daily_note_file.stat().st_size > 1024 * 1024:
                     archive_file = daily_note_file.with_name(f"{daily_note_file.stem}_ARCHIVE_{int(now)}.md")
                     daily_note_file.rename(archive_file)
-                    logger.info(f"[Scriptor] 日记文件 {daily_note_file.name} 超过 1MB，已轮转归档至 {archive_file.name}")
+                    logger.info(
+                        f"[Scriptor] 日记文件 {daily_note_file.name} 超过 1MB，已轮转归档至 {archive_file.name}"
+                    )
 
                 with open(daily_note_file, "a", encoding="utf-8") as f:
                     f.write(entry)
@@ -736,18 +739,18 @@ class MemoryManager:
                     section_content = parts[1]
                     # 寻找下一个二级标题，确定当前章节的边界
                     next_heading_match = re.search(r"\n##\s", section_content)
-                    
+
                     if next_heading_match:
                         # 在当前章节末尾（下一个章节之前）追加
                         end_idx = next_heading_match.start()
                         current_section = section_content[:end_idx]
                         remainder = section_content[end_idx:]
-                        
+
                         if dynamic_section_marker not in current_section:
                             updated_section = current_section.rstrip() + f"\n\n{dynamic_section_marker}\n{new_entry}\n"
                         else:
                             updated_section = current_section.rstrip() + f"\n{new_entry}\n"
-                            
+
                         updated = parts[0] + target_heading + updated_section + remainder
                     else:
                         # 如果是最后一个章节，直接追加到末尾
@@ -755,9 +758,9 @@ class MemoryManager:
                             updated_section = section_content.rstrip() + f"\n\n{dynamic_section_marker}\n{new_entry}\n"
                         else:
                             updated_section = section_content.rstrip() + f"\n{new_entry}\n"
-                            
+
                         updated = parts[0] + target_heading + updated_section
-                        
+
                     profile_file.write_text(updated, encoding="utf-8")
             else:
                 # 如果目标章节不存在，追加到文件末尾并创建章节

@@ -12,7 +12,7 @@ from astrbot.api import logger
 @dataclass
 class TodoItem:
     """待办事项数据类
-    
+
     扩展字段说明：
     - due_date: 任务截止时间（绝对时间）
     - reminder_time: 实际提醒时间（due_date - advance_minutes）
@@ -21,7 +21,7 @@ class TodoItem:
     - priority: 优先级 1(低)/2(中)/3(高)，默认 2
     - linked_reminder_id: 绑定的底层定时任务 ID，用于生命周期联动
     """
-    
+
     id: int
     content: str
     created_at: datetime
@@ -33,7 +33,7 @@ class TodoItem:
     cron_expression: str = ""
     priority: int = 2
     linked_reminder_id: str = ""
-    
+
     def __post_init__(self):
         """确保数据兼容性：旧数据自动填充默认值"""
         if self.due_date is None:
@@ -44,17 +44,17 @@ class TodoItem:
             self.cron_expression = ""
         if not self.linked_reminder_id:
             self.linked_reminder_id = ""
-    
+
     def is_recurring(self) -> bool:
         """判断是否为周期性任务"""
         return bool(self.cron_expression)
-    
+
     def is_overdue(self) -> bool:
         """判断是否已逾期"""
         if self.due_date and self.status == "pending":
             return datetime.now() > self.due_date
         return False
-    
+
     def get_priority_label(self) -> str:
         """获取优先级标签"""
         labels = {1: "低", 2: "中", 3: "高"}
@@ -81,10 +81,10 @@ class TodoManager:
 
     def _get_todo_file_path(self, uid: str) -> Path:
         """获取 TODO 主文件路径
-        
+
         Args:
             uid: 用户 ID 或群组 ID
-            
+
         Returns:
             文件路径
         """
@@ -98,10 +98,10 @@ class TodoManager:
 
     def _get_archive_dir(self, uid: str) -> Path:
         """获取归档目录路径
-        
+
         Args:
             uid: 用户 ID 或群组 ID
-            
+
         Returns:
             归档目录路径
         """
@@ -113,12 +113,12 @@ class TodoManager:
 
     def _get_archive_file_path(self, uid: str, year: int, month: int) -> Path:
         """获取按月的归档文件路径
-        
+
         Args:
             uid: 用户 ID 或群组 ID
             year: 年份
             month: 月份
-            
+
         Returns:
             归档文件路径（如 TODOed/P_TODO_2024-03.md）
         """
@@ -200,7 +200,7 @@ class TodoManager:
                     completed_at = datetime.now()
 
             parsed_data = self._parse_extended_fields(content_part)
-            
+
             item = TodoItem(
                 id=current_id,
                 content=parsed_data["content"],
@@ -226,7 +226,7 @@ class TodoManager:
 
     def _parse_extended_fields(self, content: str) -> Dict[str, Any]:
         """解析扩展字段（从内容中提取元数据）
-        
+
         格式示例：
         - [ ] [2024-01-01 10:00:00] 任务内容 | ⏰2024-01-02 14:00 | 🔔10min | 🔄daily | ⭐高 | 🔗abc123
         """
@@ -239,20 +239,20 @@ class TodoManager:
             "priority": 2,
             "linked_reminder_id": "",
         }
-        
+
         parts = content.split("|")
         if len(parts) == 1:
             return result
-        
+
         result["content"] = parts[0].strip()
-        
+
         for part in parts[1:]:
             part = part.strip()
-            
+
             if part.startswith("⏰") or part.startswith("截止:"):
                 dt_str = part.replace("⏰", "").replace("截止:", "").strip()
                 result["due_date"] = self._parse_datetime(dt_str)
-            
+
             elif part.startswith("🔔") or part.startswith("提前:"):
                 advance_str = part.replace("🔔", "").replace("提前:", "").strip()
                 match = re.match(r"(\d+)\s*(min|分钟|h|小时)?", advance_str)
@@ -262,50 +262,50 @@ class TodoManager:
                     if unit in ("h", "小时"):
                         amount *= 60
                     result["advance_minutes"] = amount
-            
+
             elif part.startswith("🔄") or part.startswith("周期:"):
                 cron_str = part.replace("🔄", "").replace("周期:", "").strip()
                 result["cron_expression"] = cron_str
-            
+
             elif part.startswith("⭐") or part.startswith("优先级:"):
                 priority_str = part.replace("⭐", "").replace("优先级:", "").strip()
                 priority_map = {"高": 3, "中": 2, "低": 1, "high": 3, "medium": 2, "low": 1}
                 result["priority"] = priority_map.get(priority_str, 2)
-            
+
             elif part.startswith("🔗") or part.startswith("任务ID:"):
                 result["linked_reminder_id"] = part.replace("🔗", "").replace("任务ID:", "").strip()
-        
+
         if result["due_date"] and result["advance_minutes"] > 0:
             result["reminder_time"] = result["due_date"] - timedelta(minutes=result["advance_minutes"])
         elif result["due_date"]:
             result["reminder_time"] = result["due_date"]
-        
+
         return result
 
     def _format_extended_fields(self, item: TodoItem) -> str:
         """格式化扩展字段为可读字符串"""
         parts = [item.content]
-        
+
         if item.due_date:
             parts.append(f"⏰{item.due_date.strftime('%Y-%m-%d %H:%M')}")
-        
+
         if item.advance_minutes > 0:
             if item.advance_minutes >= 60:
                 hours = item.advance_minutes // 60
                 parts.append(f"🔔{hours}h提前")
             else:
                 parts.append(f"🔔{item.advance_minutes}min提前")
-        
+
         if item.cron_expression:
             parts.append(f"🔄{item.cron_expression}")
-        
+
         if item.priority != 2:
             priority_labels = {1: "低", 3: "高"}
             parts.append(f"⭐{priority_labels.get(item.priority, '中')}")
-        
+
         if item.linked_reminder_id:
             parts.append(f"🔗{item.linked_reminder_id[:8]}")
-        
+
         return " | ".join(parts)
 
     def _generate_markdown(self, pending_items: List[TodoItem], completed_items: List[TodoItem]) -> str:
@@ -319,16 +319,16 @@ class TodoManager:
 
         def sort_key(item: TodoItem):
             priority_order = {3: 0, 2: 1, 1: 2}
-            due_date_key = item.due_date.timestamp() if item.due_date else float('inf')
+            due_date_key = item.due_date.timestamp() if item.due_date else float("inf")
             return (priority_order.get(item.priority, 1), due_date_key, item.created_at)
 
         for item in sorted(pending_items, key=sort_key):
             timestamp = item.created_at.strftime("%Y-%m-%d %H:%M:%S")
             formatted_content = self._format_extended_fields(item)
-            
+
             overdue_marker = " ⚠️逾期" if item.is_overdue() else ""
             recurring_marker = " 🔄" if item.is_recurring() else ""
-            
+
             lines.append(f"- [ ] [{timestamp}] {formatted_content}{overdue_marker}{recurring_marker}")
 
         lines.append("")
@@ -364,27 +364,29 @@ class TodoManager:
             overdue_items = [item for item in pending_items if item.is_overdue()]
             high_priority = [item for item in pending_items if item.priority == 3 and not item.is_overdue()]
             normal_items = [item for item in pending_items if item.priority != 3 and not item.is_overdue()]
-            
+
             if overdue_items:
                 lines.append("**⚠️ 逾期任务：**")
                 for item in overdue_items[:3]:
                     due_str = f"(截止: {item.due_date.strftime('%m-%d %H:%M')})" if item.due_date else ""
                     lines.append(f"  🔴 {item.content[:40]}{'...' if len(item.content) > 40 else ''} {due_str}")
                 lines.append("")
-            
+
             if high_priority:
                 lines.append("**🔥 高优先级：**")
                 for item in high_priority[:3]:
                     due_str = f"(截止: {item.due_date.strftime('%m-%d %H:%M')})" if item.due_date else ""
                     lines.append(f"  ⭐ {item.content[:40]}{'...' if len(item.content) > 40 else ''} {due_str}")
                 lines.append("")
-            
+
             if normal_items:
                 lines.append("**📋 待办：**")
                 for i, item in enumerate(normal_items[:5], 1):
                     due_str = f"(截止: {item.due_date.strftime('%m-%d %H:%M')})" if item.due_date else ""
                     recurring_str = " 🔄" if item.is_recurring() else ""
-                    lines.append(f"  {i}. {item.content[:40]}{'...' if len(item.content) > 40 else ''}{due_str}{recurring_str}")
+                    lines.append(
+                        f"  {i}. {item.content[:40]}{'...' if len(item.content) > 40 else ''}{due_str}{recurring_str}"
+                    )
         else:
             lines.append("**✅ 无未完成待办**")
 
@@ -401,10 +403,10 @@ class TodoManager:
 
     def get_overdue_items(self, uid: str) -> List[TodoItem]:
         """获取逾期的待办事项
-        
+
         Args:
             uid: 用户 ID
-            
+
         Returns:
             逾期的待办列表
         """
@@ -414,24 +416,24 @@ class TodoManager:
 
     def get_today_high_priority_items(self, uid: str) -> List[TodoItem]:
         """获取今日高优先级待办
-        
+
         Args:
             uid: 用户 ID
-            
+
         Returns:
             今日高优先级待办列表
         """
         todo_file = self._get_todo_file_path(uid)
         pending_items, _ = self._parse_todo_file(todo_file)
-        
+
         today = datetime.now().date()
         result = []
-        
+
         for item in pending_items:
             if item.priority == 3 and item.status == "pending":
                 if item.due_date and item.due_date.date() == today:
                     result.append(item)
-        
+
         return result
 
     def add_todo(
@@ -445,7 +447,7 @@ class TodoManager:
         linked_reminder_id: str = "",
     ) -> TodoItem:
         """添加新待办
-        
+
         Args:
             uid: 用户 ID
             content: 待办内容
@@ -454,7 +456,7 @@ class TodoManager:
             cron_expression: 周期性任务 Cron 表达式
             priority: 优先级 1(低)/2(中)/3(高)
             linked_reminder_id: 关联的定时任务 ID
-            
+
         Returns:
             新创建的 TodoItem
         """
@@ -489,7 +491,7 @@ class TodoManager:
         try:
             todo_file.write_text(markdown_content, encoding="utf-8")
             logger.info(f"[TodoManager] 已添加待办: {content[:30]}... (ID: {new_item.id})")
-            
+
             self.archive_old_completed(uid)
         except Exception as e:
             logger.error(f"[TodoManager] 写入 TODO 文件失败: {e}")
@@ -499,12 +501,12 @@ class TodoManager:
 
     def complete_todo(self, uid: str, task_id: int, scheduler=None) -> Tuple[bool, Optional[TodoItem]]:
         """标记待办为已完成
-        
+
         Args:
             uid: 用户 ID
             task_id: 待办 ID
             scheduler: 可选的 TaskScheduler 实例，用于联动删除定时任务
-            
+
         Returns:
             (是否成功, 被完成的 TodoItem 或 None)
         """
@@ -529,14 +531,15 @@ class TodoManager:
                     target_item.reminder_time = next_due_date - timedelta(minutes=target_item.advance_minutes)
                 else:
                     target_item.reminder_time = next_due_date
-                
+
                 if scheduler and target_item.linked_reminder_id:
                     try:
                         scheduler.remove_task(target_item.linked_reminder_id)
-                        from ..core.scheduler import ScheduledTask
-                        import uuid
                         import time
-                        
+                        import uuid
+
+                        from ..core.scheduler import ScheduledTask
+
                         new_task = ScheduledTask(
                             task_id=str(uuid.uuid4()),
                             trigger_time=next_due_date.timestamp(),
@@ -550,7 +553,7 @@ class TodoManager:
                         logger.info(f"[TodoManager] 周期任务已推延到: {next_due_date}")
                     except Exception as e:
                         logger.warning(f"[TodoManager] 更新周期任务定时器失败: {e}")
-                
+
                 markdown_content = self._generate_markdown(pending_items, completed_items)
                 todo_file.write_text(markdown_content, encoding="utf-8")
                 logger.info(f"[TodoManager] 周期任务已完成并推延: {target_item.content[:30]}...")
@@ -575,7 +578,7 @@ class TodoManager:
         try:
             todo_file.write_text(markdown_content, encoding="utf-8")
             logger.info(f"[TodoManager] 已完成待办: {target_item.content[:30]}... (ID: {task_id})")
-            
+
             self.archive_old_completed(uid)
             return True, target_item
         except Exception as e:
@@ -586,9 +589,10 @@ class TodoManager:
         """计算周期性任务的下次执行时间"""
         if not item.cron_expression or not item.due_date:
             return None
-        
+
         try:
             from croniter import croniter
+
             base_time = datetime.now()
             cron = croniter(item.cron_expression, base_time)
             next_time = cron.get_next(datetime)
@@ -604,7 +608,7 @@ class TodoManager:
         """简单的下次执行时间计算（不依赖 croniter）"""
         cron = item.cron_expression.lower().strip()
         now = datetime.now()
-        
+
         if cron in ("daily", "每天", "every day"):
             next_time = item.due_date + timedelta(days=1)
             while next_time <= now:
@@ -635,7 +639,7 @@ class TodoManager:
         scheduler=None,
     ) -> Tuple[bool, Optional[TodoItem]]:
         """更新待办内容
-        
+
         Args:
             uid: 用户 ID
             task_id: 待办 ID
@@ -645,7 +649,7 @@ class TodoManager:
             cron_expression: 新周期表达式（可选）
             priority: 新优先级（可选）
             scheduler: 可选的 TaskScheduler 实例
-            
+
         Returns:
             (是否成功, 更新后的 TodoItem 或 None)
         """
@@ -663,7 +667,7 @@ class TodoManager:
             return False, None
 
         old_linked_id = target_item.linked_reminder_id
-        
+
         if new_content is not None:
             target_item.content = new_content
         if due_date is not None:
@@ -701,12 +705,12 @@ class TodoManager:
 
     def delete_todo(self, uid: str, task_id: int, scheduler=None) -> Tuple[bool, Optional[TodoItem]]:
         """删除待办
-        
+
         Args:
             uid: 用户 ID
             task_id: 待办 ID
             scheduler: 可选的 TaskScheduler 实例
-            
+
         Returns:
             (是否成功, 被删除的 TodoItem 或 None)
         """
@@ -743,7 +747,7 @@ class TodoManager:
         """根据 ID 获取待办事项"""
         todo_file = self._get_todo_file_path(uid)
         pending_items, completed_items = self._parse_todo_file(todo_file)
-        
+
         for item in pending_items + completed_items:
             if item.id == task_id:
                 return item
@@ -842,6 +846,7 @@ class TodoManager:
             return 0
 
         from collections import defaultdict
+
         archive_by_month = defaultdict(list)
         for item in to_archive:
             if item.completed_at:
@@ -851,7 +856,7 @@ class TodoManager:
         total_archived = 0
         for (year, month), items in archive_by_month.items():
             archive_file = self._get_archive_file_path(uid, year, month)
-            
+
             try:
                 archive_dir = self._get_archive_dir(uid)
                 if not archive_dir.exists():

@@ -535,19 +535,21 @@ class SkillExecutor:
         )
 
         llm_timeout = getattr(self.plugin.config, "llm_call_timeout", 60)
-        
+
         try:
             # 使用 AstrBot v4.x 推荐的 tool_loop_agent 接口
             # 自动处理工具调用循环
             response = await asyncio.wait_for(
                 self.plugin.context.tool_loop_agent(
                     event=event,
-                    chat_provider_id=await self.plugin.context.get_current_chat_provider_id(event.unified_msg_origin if event else None),
+                    chat_provider_id=await self.plugin.context.get_current_chat_provider_id(
+                        event.unified_msg_origin if event else None
+                    ),
                     prompt=instruction,
                     system_prompt=system_prompt,
-                    tool_call_timeout=llm_timeout
+                    tool_call_timeout=llm_timeout,
                 ),
-                timeout=llm_timeout * 2, # 留出工具执行的时间
+                timeout=llm_timeout * 2,  # 留出工具执行的时间
             )
             final_response = response.completion_text
         except Exception as e:
@@ -699,8 +701,8 @@ class SkillExecutor:
     async def _notify_user(self, event, message: str):
         """向用户发送通知"""
         try:
-            from astrbot.api.message_components import Plain
             from astrbot.api.all import MessageChain
+            from astrbot.api.message_components import Plain
 
             message_chain = MessageChain([Plain(message)])
             umo = event.unified_msg_origin

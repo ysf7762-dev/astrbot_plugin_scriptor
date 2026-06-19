@@ -15,7 +15,6 @@ except ImportError:
     logger = logging.getLogger(__name__)
 
 
-
 @dataclass
 class GroupMember:
     """群体成员"""

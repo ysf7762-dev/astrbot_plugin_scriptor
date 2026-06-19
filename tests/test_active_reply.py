@@ -47,6 +47,7 @@ class MockGroupManager:
 class MockContext:
     async def llm_generate(self, chat_provider_id=None, prompt="", **kwargs):
         from types import SimpleNamespace
+
         return SimpleNamespace(completion_text="mock response")
 
 

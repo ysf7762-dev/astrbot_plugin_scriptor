@@ -128,9 +128,11 @@ class TestActiveReplyManager:
 
     def _create_manager(self, temp_data_dir, mock_config, mock_group_manager):
         """创建管理器实例（简化版）"""
+
         class MockContext:
             async def llm_generate(self, chat_provider_id=None, prompt="", **kwargs):
                 from types import SimpleNamespace
+
                 return SimpleNamespace(completion_text="mock response")
 
         manager = ActiveReplyManager(
@@ -284,9 +286,11 @@ class TestEdgeCases:
 
     def test_empty_message_handling(self, temp_data_dir, mock_config, mock_group_manager):
         """测试空消息处理"""
+
         class MockContext:
             async def llm_generate(self, chat_provider_id=None, prompt="", **kwargs):
                 from types import SimpleNamespace
+
                 return SimpleNamespace(completion_text="mock response")
 
         manager = ActiveReplyManager(
@@ -307,9 +311,11 @@ class TestEdgeCases:
 
     def test_special_characters_in_message(self, temp_data_dir, mock_config, mock_group_manager):
         """测试特殊字符处理"""
+
         class MockContext:
             async def llm_generate(self, chat_provider_id=None, prompt="", **kwargs):
                 from types import SimpleNamespace
+
                 return SimpleNamespace(completion_text="mock response")
 
         manager = ActiveReplyManager(

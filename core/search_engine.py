@@ -20,7 +20,6 @@ except ImportError:
 
 from tools.common.bm25 import SimpleBM25
 from tools.common.text_utils import jaccard_similarity, tokenize_for_bm25
-
 from tools.integration.embedding import DualTrackEmbeddingFunction
 
 

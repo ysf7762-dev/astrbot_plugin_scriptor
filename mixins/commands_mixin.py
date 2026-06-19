@@ -204,7 +204,7 @@ class CommandsMixin(BaseMixin):
         from ..core.pending_tasks import get_pending_task_store
         from ..tools.common.file_ops import file_delete
 
-        session_id = event.session_id if hasattr(event, 'session_id') else str(id(event))
+        session_id = event.session_id if hasattr(event, "session_id") else str(id(event))
         store = get_pending_task_store()
 
         success, task = store.confirm_task(session_id)
@@ -220,9 +220,7 @@ class CommandsMixin(BaseMixin):
                 )
             else:
                 yield event.plain_result(
-                    "❌ **确认失败**\n\n"
-                    f"任务已超时或状态异常（文件: `{task.file_path}`）。\n"
-                    "请重新发起删除请求。"
+                    "❌ **确认失败**\n\n" f"任务已超时或状态异常（文件: `{task.file_path}`）。\n" "请重新发起删除请求。"
                 )
             return
 
@@ -231,10 +229,7 @@ class CommandsMixin(BaseMixin):
         result = await file_delete(event, file_path, self, force=True)
 
         if isinstance(result, dict) and result.get("status") == "pending_confirmation":
-            yield event.plain_result(
-                "⚠️ **系统异常**\n\n"
-                "删除操作未能正常完成，请重试或联系管理员。"
-            )
+            yield event.plain_result("⚠️ **系统异常**\n\n" "删除操作未能正常完成，请重试或联系管理员。")
             return
 
         if result.startswith("Error:") or result.startswith("❌"):

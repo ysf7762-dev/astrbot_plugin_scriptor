@@ -411,33 +411,33 @@ def _read_cache_put(cache_key: str, content: str, resolved_path: Path):
 def _is_vfs_path(file_path: str) -> bool:
     """
     检测路径是否为 VFS 虚拟路径
-    
+
     VFS 路径特征：
     - 以 @personal/, @group/, @root/ 开头
     - 或者是特殊标记（., 空字符串, /, \\）
     """
     if not file_path:
         return True
-    
+
     normalized = file_path.lstrip("/").lstrip("\\")
-    
+
     if normalized.startswith(VFS_NAMESPACE_PERSONAL):
         return True
     if normalized.startswith(VFS_NAMESPACE_GROUP):
         return True
     if normalized.startswith(VFS_NAMESPACE_ROOT):
         return True
-    
+
     if file_path in (".", "", "/", "\\"):
         return True
-    
+
     return False
 
 
 def _get_vfs_namespaces(event: "AstrMessageEvent", plugin: Optional[Any] = None) -> dict:
     """
     获取当前上下文的 VFS 命名空间映射
-    
+
     Returns:
         dict: {
             "@personal/": Path("/path/to/profiles/{uid}/"),
@@ -446,25 +446,25 @@ def _get_vfs_namespaces(event: "AstrMessageEvent", plugin: Optional[Any] = None)
         }
     """
     namespaces = {}
-    
+
     try:
         base_dir = _get_base_dir(event, plugin)
         data_dir = base_dir.parent.parent if base_dir.parent.name in ("profiles", "groups") else base_dir.parent
-        
+
         namespaces[VFS_NAMESPACE_ROOT] = data_dir
-        
+
         uid = _get_logical_uid(event, plugin)
         namespaces[VFS_NAMESPACE_PERSONAL] = data_dir / "profiles" / uid
-        
+
         group_id = _normalize_group_id(event)
         if group_id != "private":
             namespaces[VFS_NAMESPACE_GROUP] = data_dir / "groups" / group_id
         else:
             namespaces[VFS_NAMESPACE_GROUP] = None
-            
+
     except Exception as e:
         logger.warning(f"[VFS] 获取命名空间失败: {e}")
-        
+
     return namespaces
 
 
@@ -476,13 +476,13 @@ async def _resolve_vfs_path(
 ) -> Tuple[Path, bool, Optional[str]]:
     """
     解析 VFS 虚拟路径为物理路径
-    
+
     Args:
         file_path: VFS 路径（如 @personal/P_PROFILE.md）
         event: 消息事件对象
         plugin: 插件实例
         check_permission: 是否检查权限
-        
+
     Returns:
         (resolved_path, is_virtual, error_message)
         - resolved_path: 解析后的物理路径
@@ -491,33 +491,33 @@ async def _resolve_vfs_path(
     """
     if not _is_vfs_path(file_path):
         return Path(file_path), False, None
-    
+
     namespaces = _get_vfs_namespaces(event, plugin)
-    
+
     normalized = file_path.lstrip("/").lstrip("\\")
-    
+
     if normalized.startswith(VFS_NAMESPACE_PERSONAL):
-        relative_path = normalized[len(VFS_NAMESPACE_PERSONAL):]
+        relative_path = normalized[len(VFS_NAMESPACE_PERSONAL) :]
         personal_dir = namespaces.get(VFS_NAMESPACE_PERSONAL)
         if not personal_dir:
             return Path(file_path), True, "Error: 无法确定个人目录"
         resolved = personal_dir / relative_path
         return resolved, True, None
-    
+
     if normalized.startswith(VFS_NAMESPACE_GROUP):
-        relative_path = normalized[len(VFS_NAMESPACE_GROUP):]
+        relative_path = normalized[len(VFS_NAMESPACE_GROUP) :]
         group_dir = namespaces.get(VFS_NAMESPACE_GROUP)
         if not group_dir:
             return Path(file_path), True, "Error: 当前不在群聊环境中，无法访问 @group/ 目录"
         resolved = group_dir / relative_path
         return resolved, True, None
-    
+
     if normalized.startswith(VFS_NAMESPACE_ROOT):
-        relative_path = normalized[len(VFS_NAMESPACE_ROOT):]
+        relative_path = normalized[len(VFS_NAMESPACE_ROOT) :]
         root_dir = namespaces.get(VFS_NAMESPACE_ROOT)
         if not root_dir:
             return Path(file_path), True, "Error: 无法确定系统根目录"
-        
+
         if check_permission:
             if not plugin:
                 return Path(file_path), True, "Error: 访问 @root/ 目录需要插件实例"
@@ -525,14 +525,14 @@ async def _resolve_vfs_path(
             is_sudo = plugin.identity_manager.is_sudo(uid, plugin.config.admin_uids)
             if not is_sudo:
                 return Path(file_path), True, "Error: 只有处于管理员模式（Sudo）的管理员可以访问 @root/ 目录"
-        
+
         resolved = root_dir / relative_path
         return resolved, True, None
-    
+
     if file_path in (".", "", "/", "\\"):
         base_dir = _get_base_dir(event, plugin)
         return base_dir, True, None
-    
+
     return Path(file_path), False, None
 
 
@@ -974,7 +974,7 @@ async def file_write(
     plugin: Optional[Any] = None,
 ) -> str:
     """创建或覆盖工作文件（支持 VFS 虚拟路径）
-    
+
     Args:
         event: 消息事件对象
         file_path: 文件路径，支持：
@@ -982,7 +982,7 @@ async def file_write(
             - 物理路径：profiles/{uid}/, groups/{group_id}/, global/
         content: 文件内容
         plugin: 可选的插件实例
-        
+
     Returns:
         操作结果
     """
@@ -1802,7 +1802,7 @@ async def file_list(
             logger.debug(f"[VFS] 列出虚拟路径: {pattern} -> {resolved_path}")
             target_dir = resolved_path.parent if resolved_path.suffix else resolved_path
             list_pattern = resolved_path.name if resolved_path.suffix else "*"
-            
+
             try:
                 results = []
                 for entry in sorted(target_dir.glob(list_pattern)):
@@ -1817,7 +1817,7 @@ async def file_list(
                 return f"文件列表:\n" + "\n".join(results)
             except Exception as e:
                 return f"Error: 列出文件失败: {e}"
-    
+
     try:
         base_dir = _get_base_dir(event, plugin)
     except RuntimeError as e:
@@ -1829,12 +1829,12 @@ async def file_list(
     if pattern.startswith("profiles/") or pattern.startswith("groups/"):
         if not plugin:
             return "Error: 跨目录访问需要插件实例"
-        
+
         data_dir = base_dir.parent.parent if base_dir.parent.name in ("profiles", "groups") else base_dir.parent
         parts = pattern.split("/", 2)
         target_type = parts[0]
         target_id = parts[1] if len(parts) > 1 else ""
-        
+
         if target_type == "profiles":
             uid = _get_logical_uid(event, plugin)
             if target_id and target_id != uid:
@@ -1843,7 +1843,7 @@ async def file_list(
                     return f"Error: 只有管理员可以列出其他用户的个人目录（当前用户: {uid}，目标用户: {target_id}）"
             target_dir = data_dir / "profiles" / target_id
             list_pattern = "/".join(parts[2:]) if len(parts) > 2 else "*"
-        
+
         elif target_type == "groups":
             uid = _get_logical_uid(event, plugin)
             current_group_id = _normalize_group_id(event)
@@ -1934,20 +1934,20 @@ async def file_delete(
         if file_path.startswith("profiles/") or file_path.startswith("groups/"):
             if not plugin:
                 return "Error: 跨目录删除需要插件实例"
-            
+
             data_dir = base_dir.parent.parent if base_dir.parent.name in ("profiles", "groups") else base_dir.parent
             parts = file_path.split("/", 2)
             target_type = parts[0]
             target_id = parts[1] if len(parts) > 1 else ""
-            
+
             uid = _get_logical_uid(event, plugin)
-            
+
             if target_type == "profiles":
                 if target_id and target_id != uid:
                     is_sudo = plugin.identity_manager.is_sudo(uid, plugin.config.admin_uids)
                     if not is_sudo:
                         return f"Error: 只有管理员可以删除其他用户的文件（当前用户: {uid}，目标用户: {target_id}）"
-            
+
             elif target_type == "groups":
                 current_group_id = _normalize_group_id(event)
                 if target_id and target_id != current_group_id:
@@ -1967,16 +1967,18 @@ async def file_delete(
         return f"Error: 路径不是文件（不支持删除目录）: {resolved_path}"
 
     # 检查配置是否需要二次确认
-    require_confirmation = getattr(plugin, 'config', None) and getattr(plugin.config, 'require_delete_confirmation', True)
-    
+    require_confirmation = getattr(plugin, "config", None) and getattr(
+        plugin.config, "require_delete_confirmation", True
+    )
+
     if require_confirmation and not force:
         from ...core.pending_tasks import PendingTaskType, get_pending_task_store
-        
+
         store = get_pending_task_store()
-        session_id = event.session_id if hasattr(event, 'session_id') else str(id(event))
-        
+        session_id = event.session_id if hasattr(event, "session_id") else str(id(event))
+
         store.add_task(session_id, PendingTaskType.FILE_DELETE, str(resolved_path))
-        
+
         return {
             "status": "pending_confirmation",
             "message": "操作已挂起，等待用户通过 /delete 命令确认",
@@ -1987,12 +1989,13 @@ async def file_delete(
     # 执行实际删除
     try:
         import os
+
         os.remove(resolved_path)
-        
+
         logger.info(f"[file_delete] 文件已删除: {resolved_path} (会话: {event.session_id})")
-        
+
         return f"✅ 文件已成功删除: {file_path}"
-    
+
     except PermissionError:
         return f"Error: 权限不足，无法删除文件: {resolved_path}"
     except OSError as e:
@@ -2018,9 +2021,7 @@ async def file_send(
 
     # VFS 路径解析
     if _is_vfs_path(file_path):
-        resolved_path, is_virtual, vfs_error = await _resolve_vfs_path(
-            file_path, event, plugin, check_permission=True
-        )
+        resolved_path, is_virtual, vfs_error = await _resolve_vfs_path(file_path, event, plugin, check_permission=True)
         if vfs_error:
             return vfs_error
         if is_virtual:
@@ -2045,11 +2046,11 @@ async def file_send(
     try:
         file_component = File(file=str(resolved_path), name=resolved_path.name)
         await event.send_msg(message_chain=[file_component])
-        
+
         logger.info(f"[file_send] 文件已发送: {resolved_path} (会话: {event.session_id})")
-        
+
         return f"✅ 文件已发送: {resolved_path.name}"
-    
+
     except Exception as e:
         logger.error(f"[file_send] 发送文件失败: {e}")
         return f"Error: 发送文件失败: {e}"

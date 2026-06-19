@@ -19,7 +19,7 @@ class IdentityMixin(BaseMixin):
     - 身份绑定/解绑/重置命令
     - 身份信息查询命令
     - 权限管理工具
-    
+
     注意：所有命令装饰器已移至 main.py 中注册，避免指令冲突
     """
 

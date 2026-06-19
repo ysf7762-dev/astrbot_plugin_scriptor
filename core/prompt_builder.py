@@ -17,8 +17,9 @@ except ImportError:
 
     logger = logging.getLogger(__name__)
 
-from .context_indexer import ContextIndexer
 from tools.common.text_utils import SmartMemoryTrimmer
+
+from .context_indexer import ContextIndexer
 
 
 class PromptBuilder:
@@ -602,23 +603,23 @@ tool_search_tool(query="读取文件")  # 应该直接用 file_read_tool！
 
             todo_manager = TodoManager(self.data_dir, scope="personal")
             todo_manager.archive_old_completed(uid)
-            
+
             personal_todo = todo_manager.get_hot_memory(uid)
 
             result = ""
 
             if personal_todo and personal_todo != "【当前待办状态】\n\n**无未完成待办**\n\n**无最近完成记录**":
-                archive_hint = "> [系统提示] 超过3天的历史已完成任务已归档至 TODOed 目录。如需查询历史记录，请调用 search_historical_todos 工具（参数 scope=\"personal\"）。\n\n"
+                archive_hint = '> [系统提示] 超过3天的历史已完成任务已归档至 TODOed 目录。如需查询历史记录，请调用 search_historical_todos 工具（参数 scope="personal"）。\n\n'
                 result += f"# 个人待办清单\n{archive_hint}{personal_todo}\n"
 
             if group_id != "private":
                 group_manager = TodoManager(self.data_dir, scope="group")
                 group_manager.archive_old_completed(group_id)
-                
+
                 group_todo = group_manager.get_hot_memory(group_id)
 
                 if group_todo and group_todo != "【当前待办状态】\n\n**无未完成待办**\n\n**无最近完成记录**":
-                    archive_hint = "> [系统提示] 超过3天的历史已完成任务已归档至 TODOed 目录。如需查询历史记录，请调用 search_historical_todos 工具（参数 scope=\"group\"）。\n\n"
+                    archive_hint = '> [系统提示] 超过3天的历史已完成任务已归档至 TODOed 目录。如需查询历史记录，请调用 search_historical_todos 工具（参数 scope="group"）。\n\n'
                     result += f"# 群组待办清单\n{archive_hint}{group_todo}\n"
 
             return result
@@ -830,7 +831,7 @@ tool_search_tool(query="读取文件")  # 应该直接用 file_read_tool！
 
         social_perception = (
             "\n\n【社交感知与身份识别】\n"
-            '1. **身份标识**：`user_数字`（如 user_547813589）是系统内部逻辑 ID。在对话中，请始终使用用户在 `P_PROFILE.md` 中定义的「主称呼」来称呼用户，仅在需要艾特（@）时使用 UID 格式。\n'
+            "1. **身份标识**：`user_数字`（如 user_547813589）是系统内部逻辑 ID。在对话中，请始终使用用户在 `P_PROFILE.md` 中定义的「主称呼」来称呼用户，仅在需要艾特（@）时使用 UID 格式。\n"
             "2. **提及识别**：消息中出现的 `[@昵称(UID:user_xxx)]` 表示该用户被提及。你可以通过 UID 关联其历史记忆。\n"
         )
 

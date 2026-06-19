@@ -129,7 +129,9 @@ class KnowledgeMixin(BaseMixin):
         uid, group_id, _ = self._get_identity(event)
 
         if self.learning_manager.is_learning(uid, group_id):
-            return "⚠️ 当前处于【学习模式】，请使用 `learn_from_conversation` 工具提取知识，等待导师确认后再写入知识库。"
+            return (
+                "⚠️ 当前处于【学习模式】，请使用 `learn_from_conversation` 工具提取知识，等待导师确认后再写入知识库。"
+            )
 
         if self.learning_manager.is_read_only(uid, group_id):
             return (

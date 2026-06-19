@@ -54,8 +54,7 @@ def create_isolated_import(project_root: Path, module_name: str, file_path: Path
         spec.loader.exec_module(module)
     except ImportError as e:
         raise ImportError(
-            f"Failed to import {module_name}: {e!s}. "
-            f"This may be due to circular dependencies in core/__init__.py"
+            f"Failed to import {module_name}: {e!s}. " f"This may be due to circular dependencies in core/__init__.py"
         ) from e
 
     return module

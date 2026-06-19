@@ -10,8 +10,8 @@ VFS (Virtual File System) 虚拟文件系统功能测试
 4. 文件操作工具的 VFS 支持
 """
 
-import sys
 import asyncio
+import sys
 from pathlib import Path
 
 # 添加项目根目录到 Python 路径
@@ -20,14 +20,15 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "tools" / "common"))
 # 导入 VFS 模块
 try:
     from file_ops import (
-        _is_vfs_path,
-        _resolve_vfs_path,
-        _get_vfs_namespaces,
-        VFS_NAMESPACE_PERSONAL,
         VFS_NAMESPACE_GROUP,
+        VFS_NAMESPACE_PERSONAL,
         VFS_NAMESPACE_ROOT,
         VFS_VIRTUAL_ROOT_MARKER,
+        _get_vfs_namespaces,
+        _is_vfs_path,
+        _resolve_vfs_path,
     )
+
     print("✅ VFS 模块导入成功")
 except ImportError as e:
     print(f"❌ VFS 模块导入失败: {e}")
@@ -36,6 +37,7 @@ except ImportError as e:
 
 class MockEvent:
     """模拟消息事件对象"""
+
     def __init__(self, sender_id: str = "test_user_123", group_id: str = ""):
         self.sender_id = sender_id
         self.group_id = group_id
@@ -50,16 +52,25 @@ class MockEvent:
 
 class MockPlugin:
     """模拟插件实例"""
+
     def __init__(self, data_dir: str, is_sudo: bool = False):
         self.data_dir = data_dir
         self._is_sudo = is_sudo
-        self.identity_manager = type('obj', (object,), {
-            'is_sudo': lambda self, uid, admin_uids: is_sudo,
-            'get_or_create_uid': lambda self, sid, platform: f"user_{hash(sid) % 100000000:08d}",
-        })()
-        self.config = type('obj', (object,), {
-            'admin_uids': ["user_admin"],
-        })()
+        self.identity_manager = type(
+            "obj",
+            (object,),
+            {
+                "is_sudo": lambda self, uid, admin_uids: is_sudo,
+                "get_or_create_uid": lambda self, sid, platform: f"user_{hash(sid) % 100000000:08d}",
+            },
+        )()
+        self.config = type(
+            "obj",
+            (object,),
+            {
+                "admin_uids": ["user_admin"],
+            },
+        )()
 
 
 def test_vfs_path_detection():
@@ -73,7 +84,7 @@ def test_vfs_path_detection():
         (".", True),
         ("", True),
         ("/", True),
-        ("\\" , True),
+        ("\\", True),
         ("P_PROFILE.md", False),
         ("profiles/user_123/file.md", False),
         ("skills/test/SKILL.md", False),
@@ -101,10 +112,7 @@ async def test_vfs_namespace_resolution():
     # 测试 @personal/ 解析
     try:
         resolved, is_virtual, error = await _resolve_vfs_path(
-            "@personal/P_PROFILE.md",
-            event,
-            plugin,
-            check_permission=False
+            "@personal/P_PROFILE.md", event, plugin, check_permission=False
         )
 
         if is_virtual and resolved and not error:
@@ -118,12 +126,7 @@ async def test_vfs_namespace_resolution():
 
     # 测试 @root/ 权限检查（非 Sudo 模式）
     try:
-        resolved, is_virtual, error = await _resolve_vfs_path(
-            "@root/config.yaml",
-            event,
-            plugin,
-            check_permission=True
-        )
+        resolved, is_virtual, error = await _resolve_vfs_path("@root/config.yaml", event, plugin, check_permission=True)
 
         if error and "Sudo" in error:
             print(f"  ✅ @root/ 权限拦截正常: {error[:50]}...")

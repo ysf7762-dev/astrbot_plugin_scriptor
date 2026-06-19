@@ -184,9 +184,7 @@ class LearningManager:
 
             self._global_state = new_state
 
-            logger.info(
-                f"[LearningManager] 全局状态切换：{old_state.value} -> {new_state.value} (by: {requester_uid})"
-            )
+            logger.info(f"[LearningManager] 全局状态切换：{old_state.value} -> {new_state.value} (by: {requester_uid})")
 
             # 清空所有待确认知识
             if new_state == CognitiveState.NORMAL:
@@ -409,7 +407,9 @@ class LearningManager:
                 if conflict["type"] == "exact_match":
                     conflict_info = f"\n\n⚠️ **注意**：将覆盖已有知识「{existing_title}」"
                 elif conflict["type"] == "similar_match":
-                    conflict_info = f"\n\n⚠️ **注意**：与已有知识「{existing_title}」相似度 {score:.0%}，确认后将覆盖更新"
+                    conflict_info = (
+                        f"\n\n⚠️ **注意**：与已有知识「{existing_title}」相似度 {score:.0%}，确认后将覆盖更新"
+                    )
 
             return f"""✅ 知识已暂存，等待用户确认：
 
@@ -498,7 +498,7 @@ class LearningManager:
         # 写入知识库
         if self.kb:
             try:
-                from .knowledge_base import KnowledgeType, KnowledgeItem
+                from .knowledge_base import KnowledgeItem, KnowledgeType
 
                 # 映射知识类型
                 type_mapping = {

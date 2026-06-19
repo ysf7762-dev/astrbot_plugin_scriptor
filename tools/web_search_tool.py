@@ -65,9 +65,7 @@ class WebSearchTool:
 
         self.archive_enabled = archive_enabled
         self.fetch_top_n = fetch_top_n
-        self.default_engines = (
-            [e.strip() for e in default_engines.split(",") if e.strip()] if default_engines else None
-        )
+        self.default_engines = [e.strip() for e in default_engines.split(",") if e.strip()] if default_engines else None
         self._search_count = 0
         self._archive_count = 0
 
@@ -159,7 +157,7 @@ class WebSearchTool:
 
                 if tasks:
                     fetched_results = await asyncio.gather(*tasks)
-                    
+
                     for idx, url, content in sorted(fetched_results):
                         fetched_contents.append(f"\n---\n\n### 📖 网页 {idx}: {url}\n\n{content}")
 
