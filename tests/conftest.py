@@ -15,9 +15,20 @@ import pytest
 
 # ── Python 3.9 兼容：确保有事件循环 ─
 # Python 3.10+ 的 get_event_loop() 会自动创建循环，3.9 不会
-# asyncio.Lock() 等内部直接调用 events.get_event_loop()，必须提前创建
+# asyncio.Lock() 内部调用 asyncio.events.get_event_loop()，必须 patch 两个入口
 if sys.version_info < (3, 10):
-    asyncio.set_event_loop(asyncio.new_event_loop())
+    _orig_events_get_event_loop = asyncio.events.get_event_loop
+
+    def _safe_events_get_event_loop():
+        try:
+            return _orig_events_get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            return loop
+
+    asyncio.events.get_event_loop = _safe_events_get_event_loop
+    asyncio.get_event_loop = _safe_events_get_event_loop
 # ── Mock astrbot 模块（必须在任何其他导入之前） ─
 # CI 环境中没有安装 astrbot，需要创建 mock 模块
 _astrbot = types.ModuleType("astrbot")
