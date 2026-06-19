@@ -23,6 +23,7 @@ from astrbot.api import logger
 
 if TYPE_CHECKING:
     from astrbot.api.provider import Provider
+    from astrbot.api.star import Context
 
     from .config_pydantic import ScriptorConfigPydantic
     from .group_manager import GroupManager
@@ -385,10 +386,7 @@ class ActiveReplyManager:
             if self.config.ar_intent_model_provider:
                 try:
                     intent_provider_id = self.config.ar_intent_model_provider
-                    response = await self.context.llm_generate(
-                        chat_provider_id=intent_provider_id,
-                        prompt=prompt
-                    )
+                    response = await self.context.llm_generate(chat_provider_id=intent_provider_id, prompt=prompt)
                     result = response.completion_text.strip().upper()
                     return "YES" in result
                 except Exception as e:
@@ -396,10 +394,7 @@ class ActiveReplyManager:
 
             # Fallback 到默认模型
             provider_id = await self.context.get_current_chat_provider_id(None)
-            response = await self.context.llm_generate(
-                chat_provider_id=provider_id,
-                prompt=prompt
-            )
+            response = await self.context.llm_generate(chat_provider_id=provider_id, prompt=prompt)
             result = response.completion_text.strip().upper()
             return "YES" in result
 
@@ -418,10 +413,7 @@ class ActiveReplyManager:
 
         try:
             provider_id = await self.context.get_current_chat_provider_id(None)
-            response = await self.context.llm_generate(
-                chat_provider_id=provider_id,
-                prompt=prompt
-            )
+            response = await self.context.llm_generate(chat_provider_id=provider_id, prompt=prompt)
 
             result_text = response.completion_text.strip()
 

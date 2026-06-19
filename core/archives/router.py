@@ -107,7 +107,9 @@ class ArchiveRouter:
                 group_dir = self.data_dir / "groups" / group_id
                 group_db = group_dir / "archives.db"
                 if group_db.exists():
-                    dbs.append({"scope": ArchiveScope.GROUP, "path": group_db, "priority": 2, "label": f"群组档案({group_id})"})
+                    dbs.append(
+                        {"scope": ArchiveScope.GROUP, "path": group_db, "priority": 2, "label": f"群组档案({group_id})"}
+                    )
 
         global_db = self.data_dir / "global" / "archives.db"
         if global_db.exists():
@@ -126,12 +128,14 @@ class ArchiveRouter:
             if group_path.is_dir() and not group_path.name.startswith("."):
                 group_db = group_path / "archives.db"
                 if group_db.exists():
-                    dbs.append({
-                        "scope": ArchiveScope.GROUP,
-                        "path": group_db,
-                        "priority": 2,
-                        "label": f"群组档案({group_path.name})"
-                    })
+                    dbs.append(
+                        {
+                            "scope": ArchiveScope.GROUP,
+                            "path": group_db,
+                            "priority": 2,
+                            "label": f"群组档案({group_path.name})",
+                        }
+                    )
         return dbs
 
     def get_db_path_for_scope(self, uid: str, group_id: str, scope: ArchiveScope) -> Path:
@@ -236,6 +240,7 @@ class ArchiveRouter:
                     ORDER BY import_time DESC
                 """)
 
+                result: List[Dict[str, Any]] = []
                 rows = cursor.fetchall()
                 for row in rows:
                     arc = dict(row)
@@ -341,7 +346,9 @@ class ArchiveIndex:
 
         return result
 
-    def find_table_scope(self, uid: str, group_id: str, table_name: str, is_sudo: bool = False) -> Optional[Tuple[Path, ArchiveScope]]:
+    def find_table_scope(
+        self, uid: str, group_id: str, table_name: str, is_sudo: bool = False
+    ) -> Optional[Tuple[Path, ArchiveScope]]:
         """
         查找表所在的数据库
 
