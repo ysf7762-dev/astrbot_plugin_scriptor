@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # tools/common/file_ops.py
 """文件操作工具模块 - 参考 CoPaw 的 AgentMdManager 设计
 

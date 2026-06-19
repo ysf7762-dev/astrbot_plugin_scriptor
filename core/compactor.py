@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # core/compactor.py
 """Scriptor 记忆压缩模块
 

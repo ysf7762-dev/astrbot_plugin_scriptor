@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # scripts/quick_quality_check.py
 """快速代码质量检查脚本（无需外部依赖）
 

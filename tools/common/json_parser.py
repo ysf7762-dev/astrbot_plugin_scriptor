@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # tools/common/json_parser.py
 """JSON解析工具模块"""
 

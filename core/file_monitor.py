@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # core/file_monitor.py
 """
 Scriptor 文件监控模块

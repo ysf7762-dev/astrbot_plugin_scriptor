@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # tools/common/text_utils.py
 """文本处理工具模块 - Token估算与智能裁剪"""
 
