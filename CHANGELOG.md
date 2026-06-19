@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.7] - 2026-06-09
+
+### Fixed
+- 移除 pandas 版本上限限制（`<3.0.0` → 无上限），兼容 pandas 3.0+，解决与 AstrBot 4.24.5 的依赖冲突
+- 修复群聊消息重复写入问题：`memory_manager.record_interaction()` 现在只记录私聊日记，群聊日记由 `group_manager` 统一负责，避免同一消息被写入两次
+
 ## [1.0.6] - 2026-05-06
 
 ### Fixed

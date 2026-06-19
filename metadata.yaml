@@ -1,7 +1,7 @@
 name: "Scriptor"
 description: "基于 Scriptor 体系的多角色跨群体 AI 智能管家记忆系统"
 author: "ysf7762-dev"
-version: "1.0.6"
+version: "1.0.7"
 repo: "https://github.com/ysf7762-dev/astrbot_plugin_scriptor"
 astrbot_version: ">=4.5.0"
 display_name: "灵笔司书"

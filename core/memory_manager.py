@@ -366,57 +366,65 @@ class MemoryManager:
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(now))
         today_str = time.strftime("%Y-%m-%d", time.localtime(now))
 
+        session_key = f"{uid}_{group_id}"
+        is_new_session = False
+
+        # 只有私聊才写入日记文件，群聊日记由 group_manager 负责
         if group_id == "private":
             target_dir = self._get_profile_dir(uid) / "memory"
-        else:
-            target_dir = self._get_group_dir(group_id) / "memory"
+            target_dir.mkdir(parents=True, exist_ok=True)
 
-        target_dir.mkdir(parents=True, exist_ok=True)
+            daily_note_file = target_dir / f"{today_str}.md"
 
-        session_key = f"{uid}_{group_id}"
-        daily_note_file = target_dir / f"{today_str}.md"
-
-        async with self._state_lock:
-            last_active = self._last_active_time.get(session_key, 0)
-            last_file = self._last_active_file.get(session_key)
-            is_new_session = False
-            if now - last_active > 3600 or not last_file:
-                if not last_file or today_str != last_file.replace(".md", ""):
-                    active_file_name = f"{today_str}.md"
-                    is_new_session = True
+            async with self._state_lock:
+                last_active = self._last_active_time.get(session_key, 0)
+                last_file = self._last_active_file.get(session_key)
+                if now - last_active > 3600 or not last_file:
+                    if not last_file or today_str != last_file.replace(".md", ""):
+                        active_file_name = f"{today_str}.md"
+                        is_new_session = True
+                    else:
+                        active_file_name = last_file
                 else:
                     active_file_name = last_file
-            else:
-                active_file_name = last_file
 
-            self._last_active_time[session_key] = now
-            self._last_active_file[session_key] = active_file_name
-            daily_note_file = target_dir / active_file_name
+                self._last_active_time[session_key] = now
+                self._last_active_file[session_key] = active_file_name
+                daily_note_file = target_dir / active_file_name
 
-        # 记录绝对时间，精确到秒，防止时间幻觉
-        entry = f"### [{timestamp}] {role}\n{content}\n\n"
+            # 记录绝对时间，精确到秒，防止时间幻觉
+            entry = f"### [{timestamp}] {role}\n{content}\n\n"
 
-        # FIX P0-2: 使用文件锁保证并发安全，同时保持原子性
-        # 获取文件锁后，在锁内更新状态，确保状态和文件操作原子性
-        lock = await self._get_lock(daily_note_file)
-        async with lock:
-            # 在锁内再次检查并更新状态（双重检查锁定模式）
+            # FIX P0-2: 使用文件锁保证并发安全，同时保持原子性
+            lock = await self._get_lock(daily_note_file)
+            async with lock:
+                # 在锁内再次检查并更新状态（双重检查锁定模式）
+                async with self._state_lock:
+                    current_file = self._last_active_file.get(session_key)
+                    if current_file != active_file_name:
+                        active_file_name = current_file
+                        daily_note_file = target_dir / active_file_name
+
+                # 检查日记文件大小，如果超过 1MB，则进行轮转归档
+                if daily_note_file.exists() and daily_note_file.stat().st_size > 1024 * 1024:
+                    archive_file = daily_note_file.with_name(f"{daily_note_file.stem}_ARCHIVE_{int(now)}.md")
+                    daily_note_file.rename(archive_file)
+                    logger.info(f"[Scriptor] 日记文件 {daily_note_file.name} 超过 1MB，已轮转归档至 {archive_file.name}")
+
+                with open(daily_note_file, "a", encoding="utf-8") as f:
+                    f.write(entry)
+        else:
+            # 群聊场景：只更新时间戳，不写入日记文件
             async with self._state_lock:
-                current_file = self._last_active_file.get(session_key)
-                if current_file != active_file_name:
-                    active_file_name = current_file
-                    daily_note_file = target_dir / active_file_name
+                self._last_active_time[session_key] = now
+                # 检查是否是新会话（用于记忆提取触发）
+                last_active = self._last_active_time.get(session_key, 0)
+                last_file = self._last_active_file.get(session_key)
+                if now - last_active > 3600 or not last_file:
+                    if not last_file or today_str != (last_file or "").replace(".md", ""):
+                        is_new_session = True
 
-            # 检查日记文件大小，如果超过 1MB，则进行轮转归档
-            if daily_note_file.exists() and daily_note_file.stat().st_size > 1024 * 1024:
-                archive_file = daily_note_file.with_name(f"{daily_note_file.stem}_ARCHIVE_{int(now)}.md")
-                daily_note_file.rename(archive_file)
-                logger.info(f"[Scriptor] 日记文件 {daily_note_file.name} 超过 1MB，已轮转归档至 {archive_file.name}")
-
-            with open(daily_note_file, "a", encoding="utf-8") as f:
-                f.write(entry)
-
-        # 增加未处理消息计数
+        # 增加未处理消息计数（私聊和群聊都需要，用于记忆提取）
         if session_key not in self._unprocessed_messages:
             self._unprocessed_messages[session_key] = []
         self._unprocessed_messages[session_key].append({"role": role, "content": content})

@@ -91,7 +91,7 @@ from .web.shared_state import set_shared_state
     "astrbot_plugin_scriptor",
     "Scriptor",
     "基于 Scriptor 的多角色跨群体 AI 智能管家记忆系统",
-    "1.0.6",
+    "1.0.7",
     "https://github.com/astrbots/astrbot_plugin_scriptor",
 )
 class ScriptorPlugin(
