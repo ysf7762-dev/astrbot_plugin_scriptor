@@ -62,7 +62,7 @@ def create_isolated_import(project_root: Path, module_name: str, file_path: Path
 
 def safe_import_core_module(project_root: Path, relative_path: str, class_name: str = None):
     """安全地导入核心模块"""
-    file_path = project_root / relative_path.replace("/", "\\")
+    file_path = project_root / Path(*relative_path.replace(".py", "").split("/"))
     module_name = relative_path.replace("/", ".").replace(".py", "")
 
     module = create_isolated_import(project_root, module_name, file_path)
