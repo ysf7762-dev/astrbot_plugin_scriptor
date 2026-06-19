@@ -146,8 +146,6 @@ def setup_syspath():
 
 
 @pytest.fixture(scope="session")
-def event_loop():
-    """Python 3.9 兼容：创建 session 级事件循环"""
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
+def event_loop_policy():
+    """Python 3.9 兼容：使用新的事件循环策略"""
+    return asyncio.DefaultEventLoopPolicy()
